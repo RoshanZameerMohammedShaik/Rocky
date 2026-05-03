@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rocky-ai"
+version = "0.2.0"
+description = "A fully local, open-source agentic AI CLI tool — no cloud, no external apps"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Rocky.AI Contributors"}
+]
+keywords = ["ai", "cli", "agent", "local", "llm", "gguf"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "llama-cpp-python>=0.2.80",
+    "httpx>=0.25.0",
+    "rich>=13.0.0",
+    "prompt-toolkit>=3.0.0",
+    "pyyaml>=6.0",
+    "beautifulsoup4>=4.12.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+]
+audio = [
+    "faster-whisper>=0.10.0",
+]
+cuda = [
+    "llama-cpp-python[cuda]>=0.2.80",
+]
+
+[project.scripts]
+Rocky = "rocky.cli:main"
+rocky = "rocky.cli:main"
+rocky-ai = "rocky.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/rocky-ai/rocky-ai"
+Documentation = "https://rocky.ai/docs"
+Repository = "https://github.com/rocky-ai/rocky-ai"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["rocky*"]
