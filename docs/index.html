@@ -26,6 +26,8 @@
             --orange: #ffaa2c;
             --border: #1e1e30;
             --radius: 12px;
+            --diff-green-bg: #0d2818;
+            --diff-green-border: #1a4d2e;
         }
 
         html { scroll-behavior: smooth; }
@@ -104,24 +106,28 @@
 
         .hero-content { position: relative; z-index: 1; }
 
-        .ascii-art {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: clamp(0.4rem, 1.8vw, 0.85rem);
-            line-height: 1.2;
-            color: var(--accent);
-            white-space: pre;
-            margin-bottom: 32px;
+        .hero-logo {
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(3.5rem, 10vw, 7rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 50%, #ff6bcb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
             opacity: 0;
             animation: fadeInUp 0.8s ease forwards;
-            text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+            letter-spacing: -2px;
+            filter: drop-shadow(0 0 40px rgba(0, 212, 255, 0.2));
         }
 
         .hero h1 {
-            font-size: clamp(1.8rem, 5vw, 3.5rem);
-            font-weight: 700;
+            font-size: clamp(1.4rem, 3.5vw, 2.2rem);
+            font-weight: 600;
             margin-bottom: 20px;
             opacity: 0;
             animation: fadeInUp 0.8s ease 0.2s forwards;
+            color: var(--text);
         }
 
         .hero h1 .gradient {
@@ -131,8 +137,8 @@
             background-clip: text;
         }
 
-        .hero p {
-            font-size: clamp(1rem, 2vw, 1.25rem);
+        .hero p.hero-desc {
+            font-size: clamp(1rem, 2vw, 1.15rem);
             color: var(--text-dim);
             max-width: 600px;
             margin: 0 auto 40px;
@@ -177,16 +183,36 @@
             box-shadow: 0 8px 40px rgba(0, 212, 255, 0.45);
         }
 
-        .btn-primary::after {
+        .btn-primary::before {
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+            background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%), rgba(255,255,255,0.4) 0%, transparent 60%);
             opacity: 0;
-            transition: opacity 0.3s;
+            transition: opacity 0.5s ease;
+            transform: scale(0);
         }
 
-        .btn-primary:hover::after { opacity: 1; }
+        .btn-primary:hover::before {
+            opacity: 1;
+            transform: scale(2);
+            transition: opacity 0.3s ease, transform 0.6s ease;
+        }
+
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 50px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            z-index: -1;
+            animation: pulseGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.5; filter: blur(8px); }
+            50% { opacity: 0.8; filter: blur(15px); }
+        }
 
         .btn-secondary {
             background: var(--bg-card);
@@ -300,6 +326,11 @@
             font-size: 1.8rem;
             margin-bottom: 16px;
             display: block;
+            transition: filter 0.3s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            filter: drop-shadow(0 0 12px rgba(0, 212, 255, 0.6));
         }
 
         .feature-card h3 {
@@ -470,6 +501,44 @@
 
         .commands-table .cmd-desc { color: var(--text-dim); }
 
+        /* ===== TOOLS GRID ===== */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-top: 48px;
+        }
+
+        .tool-category {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+        }
+
+        .tool-category h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--accent);
+        }
+
+        .tool-category ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .tool-category li {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            padding: 4px 8px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 4px;
+        }
+
         /* ===== MODELS TABLE ===== */
         .models-grid {
             display: grid;
@@ -534,24 +603,186 @@
         .model-card .spec .label { color: var(--text-dim); }
         .model-card .spec .value { font-weight: 500; }
 
-        /* ===== PERMISSIONS ===== */
-        .perm-demo {
+        /* ===== PERMISSIONS TERMINAL ===== */
+        .perm-terminal {
             background: var(--bg-code);
             border: 1px solid var(--border);
             border-radius: var(--radius);
+            overflow: hidden;
+            max-width: 650px;
+        }
+
+        .perm-terminal-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .perm-terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .perm-terminal-dot.red { background: #ff5f57; }
+        .perm-terminal-dot.yellow { background: #febc2e; }
+        .perm-terminal-dot.green { background: #28c840; }
+
+        .perm-terminal-title {
+            flex: 1;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .perm-terminal-body {
             padding: 24px;
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.85rem;
             line-height: 1.8;
-            max-width: 650px;
         }
 
-        .perm-demo .line { margin-bottom: 2px; }
-        .perm-demo .yellow { color: var(--orange); }
-        .perm-demo .cyan { color: var(--accent); }
-        .perm-demo .green { color: var(--green); }
-        .perm-demo .dim { color: var(--text-dim); }
-        .perm-demo .bold { font-weight: 700; color: var(--text); }
+        .perm-terminal-body .line { margin-bottom: 2px; }
+        .perm-terminal-body .yellow { color: var(--orange); }
+        .perm-terminal-body .cyan { color: var(--accent); }
+        .perm-terminal-body .green { color: var(--green); }
+        .perm-terminal-body .dim { color: var(--text-dim); }
+        .perm-terminal-body .bold { font-weight: 700; color: var(--text); }
+
+        /* ===== TERMINAL DEMO ===== */
+        .terminal {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            max-width: 720px;
+            margin: 40px auto 0;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease 0.8s forwards;
+        }
+
+        .terminal-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .terminal-dot.red { background: #ff5f57; }
+        .terminal-dot.yellow { background: #febc2e; }
+        .terminal-dot.green { background: #28c840; }
+
+        .terminal-title {
+            flex: 1;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .terminal-body {
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            line-height: 1.7;
+            min-height: 340px;
+            max-height: 460px;
+            overflow-y: auto;
+        }
+
+        .terminal-body .line { margin-bottom: 2px; }
+        .terminal-body .prompt-char { color: var(--green); }
+        .terminal-body .output { color: var(--text-dim); }
+        .terminal-body .accent { color: var(--accent); }
+        .terminal-body .typing-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 14px;
+            background: var(--accent);
+            animation: blink 1s step-end infinite;
+            vertical-align: text-bottom;
+            margin-left: 2px;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* Diff line styling */
+        .terminal-body .diff-add {
+            background: var(--diff-green-bg);
+            border-left: 3px solid var(--green);
+            padding: 2px 8px;
+            margin: 1px 0;
+            border-radius: 2px;
+            display: block;
+            color: #7dffb3;
+        }
+
+        /* Shimmer animation for file read */
+        .terminal-body .shimmer-container {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .terminal-body .shimmer-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            animation: shimmerSweep 1.5s ease-in-out forwards;
+        }
+
+        @keyframes shimmerSweep {
+            0% { left: -60%; }
+            100% { left: 120%; }
+        }
+
+        /* Rectangular loading dots */
+        .loading-dots-container {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .loading-dots-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 8px);
+            grid-template-rows: repeat(2, 8px);
+            gap: 4px;
+        }
+
+        .loading-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            opacity: 0.2;
+        }
+
+        .loading-dot.active {
+            opacity: 1;
+            box-shadow: 0 0 6px var(--accent);
+        }
 
         /* ===== FOOTER ===== */
         footer {
@@ -617,16 +848,6 @@
             50% { opacity: 0.5; }
         }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
-        @keyframes typing {
-            from { width: 0; }
-            to { width: 100%; }
-        }
-
         .animate-on-scroll {
             opacity: 0;
             transform: translateY(40px);
@@ -641,69 +862,23 @@
         /* Stagger children */
         .animate-on-scroll.visible .feature-card:nth-child(1) { transition-delay: 0s; }
         .animate-on-scroll.visible .feature-card:nth-child(2) { transition-delay: 0.1s; }
-        .animate-on-scroll.visible .feature-card:nth-child(3) { transition-delay: 0.2s; }
-        .animate-on-scroll.visible .feature-card:nth-child(4) { transition-delay: 0.3s; }
-        .animate-on-scroll.visible .feature-card:nth-child(5) { transition-delay: 0.4s; }
-        .animate-on-scroll.visible .feature-card:nth-child(6) { transition-delay: 0.5s; }
+        .animate-on-scroll.visible .feature-card:nth-child(3) { transition-delay: 0.15s; }
+        .animate-on-scroll.visible .feature-card:nth-child(4) { transition-delay: 0.2s; }
+        .animate-on-scroll.visible .feature-card:nth-child(5) { transition-delay: 0.25s; }
+        .animate-on-scroll.visible .feature-card:nth-child(6) { transition-delay: 0.3s; }
+        .animate-on-scroll.visible .feature-card:nth-child(7) { transition-delay: 0.35s; }
+        .animate-on-scroll.visible .feature-card:nth-child(8) { transition-delay: 0.4s; }
+        .animate-on-scroll.visible .feature-card:nth-child(9) { transition-delay: 0.45s; }
 
-        /* ===== TERMINAL DEMO ===== */
-        .terminal {
-            background: var(--bg-code);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            overflow: hidden;
-            max-width: 700px;
-            margin: 40px auto 0;
+        .feature-card {
             opacity: 0;
-            animation: fadeInUp 0.8s ease 0.8s forwards;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .terminal-bar {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.03);
-            border-bottom: 1px solid var(--border);
-        }
-
-        .terminal-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-
-        .terminal-dot.red { background: #ff5f57; }
-        .terminal-dot.yellow { background: #febc2e; }
-        .terminal-dot.green { background: #28c840; }
-
-        .terminal-title {
-            flex: 1;
-            text-align: center;
-            font-size: 0.8rem;
-            color: var(--text-dim);
-            font-family: 'Inter', sans-serif;
-        }
-
-        .terminal-body {
-            padding: 20px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            line-height: 1.8;
-            min-height: 200px;
-        }
-
-        .terminal-body .line { margin-bottom: 2px; }
-        .terminal-body .prompt-char { color: var(--green); }
-        .terminal-body .output { color: var(--text-dim); }
-        .terminal-body .accent { color: var(--accent); }
-        .terminal-body .typing-cursor {
-            display: inline-block;
-            width: 8px;
-            height: 16px;
-            background: var(--accent);
-            animation: pulse 1s infinite;
-            vertical-align: text-bottom;
+        .animate-on-scroll.visible .feature-card {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         /* ===== RESPONSIVE ===== */
@@ -713,6 +888,7 @@
             .feature-grid { grid-template-columns: 1fr; }
             .models-grid { grid-template-columns: 1fr; }
             .hero-actions { flex-direction: column; align-items: center; }
+            .tools-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -736,15 +912,9 @@
 <section class="hero">
     <div class="hero-bg"></div>
     <div class="hero-content">
-        <div class="ascii-art" aria-hidden="true">
-██████╗  ██████╗  ██████╗██╗  ██╗██╗   ██╗     █████╗ ██╗
-██╔══██╗██╔═══██╗██╔════╝██║ ██╔╝╚██╗ ██╔╝    ██╔══██╗██║
-██████╔╝██║   ██║██║     █████╔╝  ╚████╔╝     ███████║██║
-██╔══██╗██║   ██║██║     ██╔═██╗   ╚██╔╝      ██╔══██║██║
-██║  ██║╚██████╔╝╚██████╗██║  ██╗   ██║    ██╗██║  ██║██║
-╚═╝  ╚═╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝   ╚═╝    ╚═╝╚═╝  ╚═╝╚═╝</div>
+        <div class="hero-logo">Rocky.AI</div>
 
-        <h1>Your AI. <span class="gradient">Your machine.</span><br>No cloud required.</h1>
+        <h1>Your AI. <span class="gradient">Your machine.</span> No cloud required.</h1>
 
         <div class="badge-row">
             <span class="badge"><span class="dot green"></span> 100% Local</span>
@@ -752,10 +922,10 @@
             <span class="badge"><span class="dot purple"></span> Zero API Keys</span>
         </div>
 
-        <p>A fully local, agentic AI assistant that runs entirely on your machine. No Ollama, no cloud, no external apps. Just type <strong>Rocky</strong>.</p>
+        <p class="hero-desc">A fully local, agentic AI assistant that runs entirely on your machine. No Ollama, no cloud, no external apps. Just type <strong>Rocky</strong>.</p>
 
         <div class="hero-actions">
-            <a href="#install" class="btn btn-primary">
+            <a href="#install" class="btn btn-primary" id="download-btn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Download Rocky
             </a>
@@ -854,7 +1024,7 @@
                 <ul>
                     <li><span class="icon">&#x2713;</span> Runs 100% on your machine &mdash; your data never leaves</li>
                     <li><span class="icon">&#x2713;</span> Works offline after first model download</li>
-                    <li><span class="icon">&#x2713;</span> Installs with one command: <code>pip install rocky-ai</code></li>
+                    <li><span class="icon">&#x2713;</span> Installs with one command: <code>pip install .</code></li>
                     <li><span class="icon">&#x2713;</span> Launches with one command: <code>Rocky</code></li>
                     <li><span class="icon">&#x2713;</span> Auto-downloads its AI model on first run</li>
                     <li><span class="icon">&#x2713;</span> Reads, writes, and edits your files</li>
@@ -887,18 +1057,20 @@
         <div class="animate-on-scroll">
             <div class="section-label">Get Started</div>
             <h2 class="section-title">Install in 60 seconds</h2>
-            <p class="section-desc">One install command. One run command. Works on macOS, Windows, and Linux.</p>
+            <p class="section-desc">Clone, install, run. Works on macOS, Windows, and Linux.</p>
         </div>
 
         <div class="install-steps animate-on-scroll">
             <div class="install-step">
                 <div class="step-num">1</div>
                 <div class="step-content">
-                    <h4>Install Rocky</h4>
+                    <h4>Clone &amp; Install</h4>
                     <p>Requires Python 3.10+. This installs Rocky and its embedded AI engine.</p>
                     <div class="code-block">
                         <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                        <span class="prompt">$ </span><span class="cmd">pip install rocky-ai</span>
+                        <span class="prompt">$ </span><span class="cmd">git clone https://github.com/RoshanZameerMohammedShaik/Rocky.git</span><br>
+                        <span class="prompt">$ </span><span class="cmd">cd Rocky</span><br>
+                        <span class="prompt">$ </span><span class="cmd">pip install .</span>
                     </div>
                 </div>
             </div>
@@ -928,12 +1100,10 @@
             <h4 style="margin-bottom: 16px; color: var(--text-dim);">Platform-specific notes</h4>
             <div class="code-block" style="max-width: 700px;">
                 <span class="comment"># macOS &mdash; Metal GPU acceleration works automatically</span><br>
-                <span class="prompt">$ </span><span class="cmd">pip install rocky-ai</span><br><br>
+                <span class="prompt">$ </span><span class="cmd">pip install .</span><br><br>
                 <span class="comment"># Windows/Linux with NVIDIA GPU &mdash; for CUDA acceleration</span><br>
-                <span class="prompt">$ </span><span class="cmd">CMAKE_ARGS="-DGGML_CUDA=on" pip install rocky-ai</span><br><br>
-                <span class="comment"># From source</span><br>
-                <span class="prompt">$ </span><span class="cmd">git clone https://github.com/RoshanZameerMohammedShaik/Rocky.git</span><br>
-                <span class="prompt">$ </span><span class="cmd">cd Rocky && pip install -e .</span>
+                <span class="prompt">$ </span><span class="cmd">CMAKE_ARGS="-DGGML_CUDA=on" pip install .</span><br><br>
+                <span class="comment"># All platforms: Python 3.10+ required</span>
             </div>
         </div>
     </div>
@@ -944,7 +1114,7 @@
     <div class="container">
         <div class="animate-on-scroll">
             <div class="section-label">Usage</div>
-            <h2 class="section-title">Commands & Controls</h2>
+            <h2 class="section-title">Commands &amp; Controls</h2>
             <p class="section-desc">Rocky uses slash commands for built-in operations. Everything else is natural conversation.</p>
         </div>
 
@@ -966,6 +1136,10 @@
                         <td class="cmd-desc">Exit Rocky (also: /exit)</td>
                     </tr>
                     <tr>
+                        <td class="cmd-name">/exit</td>
+                        <td class="cmd-desc">Exit Rocky</td>
+                    </tr>
+                    <tr>
                         <td class="cmd-name">/clear</td>
                         <td class="cmd-desc">Clear conversation history</td>
                     </tr>
@@ -983,11 +1157,11 @@
                     </tr>
                     <tr>
                         <td class="cmd-name">/model</td>
-                        <td class="cmd-desc">Show info about the current model</td>
+                        <td class="cmd-desc">Show current model info</td>
                     </tr>
                     <tr>
                         <td class="cmd-name">/models</td>
-                        <td class="cmd-desc">List all available models with download status</td>
+                        <td class="cmd-desc">List available models with download status</td>
                     </tr>
                     <tr>
                         <td class="cmd-name">/trust</td>
@@ -999,6 +1173,62 @@
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+        <!-- TOOLS -->
+        <div class="animate-on-scroll" style="margin-top: 64px;">
+            <h3 class="section-title" style="font-size: 1.5rem;">Built-in Tools</h3>
+            <p class="section-desc">Rocky has 16 tools that it can invoke autonomously during conversations.</p>
+        </div>
+
+        <div class="tools-grid animate-on-scroll">
+            <div class="tool-category">
+                <h4>File System</h4>
+                <ul>
+                    <li>read_file</li>
+                    <li>write_file</li>
+                    <li>edit_file</li>
+                    <li>list_directory</li>
+                    <li>search_files</li>
+                </ul>
+            </div>
+            <div class="tool-category">
+                <h4>Execution</h4>
+                <ul>
+                    <li>run_command</li>
+                </ul>
+            </div>
+            <div class="tool-category">
+                <h4>Web</h4>
+                <ul>
+                    <li>web_search</li>
+                    <li>web_fetch</li>
+                </ul>
+            </div>
+            <div class="tool-category">
+                <h4>Media</h4>
+                <ul>
+                    <li>describe_image</li>
+                    <li>transcribe_audio</li>
+                    <li>process_video</li>
+                </ul>
+            </div>
+            <div class="tool-category">
+                <h4>Git</h4>
+                <ul>
+                    <li>git_status</li>
+                    <li>git_diff</li>
+                    <li>git_log</li>
+                    <li>git_commit</li>
+                </ul>
+            </div>
+            <div class="tool-category">
+                <h4>Knowledge</h4>
+                <ul>
+                    <li>index_files</li>
+                    <li>search_knowledge</li>
+                </ul>
+            </div>
         </div>
     </div>
 </section>
@@ -1013,13 +1243,21 @@
         </div>
 
         <div class="animate-on-scroll">
-            <div class="perm-demo">
-                <div class="line"><span class="dim">Rocky.AI wants to run:</span></div>
-                <div class="line"><span class="bold">$ rm -rf ./build/</span></div>
-                <div class="line"><span class="yellow">&#x26A0; Recursive deletion with wildcard</span></div>
-                <div class="line">&nbsp;</div>
-                <div class="line"><span class="bold">[A]</span><span class="dim">llow once</span> &nbsp;&middot;&nbsp; <span class="bold">[T]</span><span class="dim">rust for session</span> &nbsp;&middot;&nbsp; <span class="bold">[D]</span><span class="dim">eny</span></div>
-                <div class="line"><span class="cyan">Your choice: </span><span class="green">a</span></div>
+            <div class="perm-terminal">
+                <div class="perm-terminal-bar">
+                    <span class="perm-terminal-dot red"></span>
+                    <span class="perm-terminal-dot yellow"></span>
+                    <span class="perm-terminal-dot green"></span>
+                    <span class="perm-terminal-title">Rocky.AI &mdash; Permission Request</span>
+                </div>
+                <div class="perm-terminal-body">
+                    <div class="line"><span class="dim">Rocky.AI wants to run:</span></div>
+                    <div class="line"><span class="bold">$ rm -rf ./build/</span></div>
+                    <div class="line"><span class="yellow">&#x26A0; Recursive deletion with wildcard</span></div>
+                    <div class="line">&nbsp;</div>
+                    <div class="line"><span class="bold">[A]</span><span class="dim">llow once</span> &nbsp;&middot;&nbsp; <span class="bold">[T]</span><span class="dim">rust for session</span> &nbsp;&middot;&nbsp; <span class="bold">[D]</span><span class="dim">eny</span></div>
+                    <div class="line"><span class="cyan">Your choice: </span><span class="green">a</span></div>
+                </div>
             </div>
 
             <div style="margin-top: 32px; max-width: 600px;">
@@ -1117,71 +1355,208 @@
     // ===== Copy code button =====
     function copyCode(btn) {
         const block = btn.parentElement;
-        const cmd = block.querySelector('.cmd');
-        if (cmd) {
-            navigator.clipboard.writeText(cmd.textContent).then(() => {
+        const cmds = block.querySelectorAll('.cmd');
+        const text = Array.from(cmds).map(c => c.textContent).join('\n');
+        if (text) {
+            navigator.clipboard.writeText(text).then(() => {
                 btn.textContent = 'Copied!';
                 setTimeout(() => btn.textContent = 'Copy', 2000);
             });
         }
     }
 
+    // ===== Download button ripple effect =====
+    const downloadBtn = document.getElementById('download-btn');
+    downloadBtn.addEventListener('mousemove', (e) => {
+        const rect = downloadBtn.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        downloadBtn.style.setProperty('--ripple-x', x + '%');
+        downloadBtn.style.setProperty('--ripple-y', y + '%');
+    });
+
     // ===== Terminal typing animation =====
-    const terminalLines = [
-        { type: 'input', text: 'pip install rocky-ai' },
-        { type: 'output', text: 'Successfully installed rocky-ai-0.2.0' },
-        { type: 'blank' },
-        { type: 'input', text: 'Rocky' },
-        { type: 'accent', text: '██████╗  ██████╗  ██████╗██╗  ██╗██╗   ██╗' },
-        { type: 'accent', text: '██╔══██╗██╔═══██╗██╔════╝██║ ██╔╝╚██╗ ██╔╝' },
-        { type: 'accent', text: '██████╔╝██║   ██║██║     █████╔╝  ╚████╔╝ ' },
-        { type: 'accent', text: '██╔══██╗██║   ██║██║     ██╔═██╗   ╚██╔╝  ' },
-        { type: 'accent', text: '██║  ██║╚██████╔╝╚██████╗██║  ██╗   ██║   ' },
-        { type: 'accent', text: '╚═╝  ╚═╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝   ╚═╝   ' },
-        { type: 'blank' },
-        { type: 'output', text: '  Your local AI assistant  ·  v0.2.0' },
-        { type: 'output', text: '  Running Online  ·  Type /help for commands' },
-        { type: 'blank' },
-        { type: 'output', text: '&#x2705; Rocky.AI is ready!' },
-        { type: 'blank' },
-        { type: 'prompt', text: 'You: ' },
-    ];
-
     const terminalBody = document.getElementById('terminal-demo');
-    let lineIndex = 0;
+    let animationStep = 0;
 
-    function addTerminalLine() {
-        if (lineIndex >= terminalLines.length) return;
+    const TYPING_SPEED = 35;
+    const LINE_DELAY = 300;
+    const STEP_DELAY = 600;
 
-        const line = terminalLines[lineIndex];
-        const div = document.createElement('div');
-        div.className = 'line';
-
-        if (line.type === 'blank') {
-            div.innerHTML = '&nbsp;';
-        } else if (line.type === 'input') {
-            div.innerHTML = '<span class="prompt-char">$ </span>' + line.text;
-        } else if (line.type === 'output') {
-            div.innerHTML = '<span class="output">' + line.text + '</span>';
-        } else if (line.type === 'accent') {
-            div.innerHTML = '<span class="accent" style="font-size:0.55rem;line-height:1;">' + line.text + '</span>';
-        } else if (line.type === 'prompt') {
-            div.innerHTML = '<span class="prompt-char">' + line.text + '</span><span class="typing-cursor"></span>';
+    function typeText(element, text, speed, callback) {
+        let i = 0;
+        function type() {
+            if (i < text.length) {
+                element.textContent += text.charAt(i);
+                i++;
+                terminalBody.scrollTop = terminalBody.scrollHeight;
+                setTimeout(type, speed);
+            } else if (callback) {
+                callback();
+            }
         }
-
-        terminalBody.appendChild(div);
-        terminalBody.scrollTop = terminalBody.scrollHeight;
-        lineIndex++;
-
-        const delay = line.type === 'input' ? 600 : line.type === 'accent' ? 40 : line.type === 'blank' ? 200 : 150;
-        setTimeout(addTerminalLine, delay);
+        type();
     }
 
-    // Start terminal animation when it scrolls into view (or on load if visible)
+    function addLine(html, className) {
+        const div = document.createElement('div');
+        div.className = 'line' + (className ? ' ' + className : '');
+        div.innerHTML = html;
+        terminalBody.appendChild(div);
+        terminalBody.scrollTop = terminalBody.scrollHeight;
+        return div;
+    }
+
+    function addBlank() {
+        addLine('&nbsp;');
+    }
+
+    function runTerminalAnimation() {
+        // Step 1: pip install rocky-ai
+        const line1 = addLine('<span class="prompt-char">$ </span><span class="typed"></span>');
+        const typed1 = line1.querySelector('.typed');
+        typeText(typed1, 'pip install rocky-ai', TYPING_SPEED, () => {
+            setTimeout(() => {
+                addLine('<span class="output">Collecting rocky-ai</span>');
+                setTimeout(() => {
+                    addLine('<span class="output">Installing collected packages: rocky-ai</span>');
+                    setTimeout(() => {
+                        addLine('<span class="output" style="color: var(--green);">Successfully installed rocky-ai-0.2.0</span>');
+                        addBlank();
+                        setTimeout(step2, STEP_DELAY);
+                    }, 200);
+                }, 200);
+            }, LINE_DELAY);
+        });
+    }
+
+    function step2() {
+        // Step 2: Rocky command
+        const line2 = addLine('<span class="prompt-char">$ </span><span class="typed"></span>');
+        const typed2 = line2.querySelector('.typed');
+        typeText(typed2, 'Rocky', TYPING_SPEED, () => {
+            setTimeout(() => {
+                addBlank();
+                addLine('<span class="accent" style="font-weight:700;">Rocky.AI</span> <span class="output">v0.2.0</span>');
+                addLine('<span class="output">Loading model: Qwen2.5-3B-Instruct (Q5_K_M)...</span>');
+                setTimeout(() => {
+                    addLine('<span style="color: var(--green);">Rocky.AI is ready!</span>');
+                    addLine('<span class="output">Type /help for commands. Start chatting below.</span>');
+                    addBlank();
+                    setTimeout(step3, STEP_DELAY);
+                }, 400);
+            }, LINE_DELAY);
+        });
+    }
+
+    function step3() {
+        // Step 3: User asks to create hello.py
+        const line3 = addLine('<span style="color: var(--accent2); font-weight:600;">You: </span><span class="typed"></span>');
+        const typed3 = line3.querySelector('.typed');
+        typeText(typed3, 'Create a hello.py file', TYPING_SPEED, () => {
+            setTimeout(() => {
+                addBlank();
+                addLine('<span class="output">Writing to <span style="color:var(--text);">hello.py</span>:</span>');
+                addBlank();
+                setTimeout(() => {
+                    // Diff lines with green background
+                    addLine('<span class="diff-add">+ def main():</span>');
+                    setTimeout(() => {
+                        addLine('<span class="diff-add">+     print("Hello from Rocky!")</span>');
+                        setTimeout(() => {
+                            addLine('<span class="diff-add">+ </span>');
+                            setTimeout(() => {
+                                addLine('<span class="diff-add">+ main()</span>');
+                                addBlank();
+                                addLine('<span style="color: var(--green);">&#x2713; File written: hello.py (4 lines)</span>');
+                                addBlank();
+                                setTimeout(step4, STEP_DELAY);
+                            }, 80);
+                        }, 80);
+                    }, 80);
+                }, 300);
+            }, LINE_DELAY);
+        });
+    }
+
+    function step4() {
+        // Step 4: User asks to read hello.py
+        const line4 = addLine('<span style="color: var(--accent2); font-weight:600;">You: </span><span class="typed"></span>');
+        const typed4 = line4.querySelector('.typed');
+        typeText(typed4, 'Read hello.py', TYPING_SPEED, () => {
+            setTimeout(() => {
+                addBlank();
+                // Create shimmer container with file content
+                const shimmerDiv = document.createElement('div');
+                shimmerDiv.className = 'line';
+                shimmerDiv.innerHTML = '<div class="shimmer-container"><span class="output" style="opacity:0.6;">def main():<br>&nbsp;&nbsp;&nbsp;&nbsp;print("Hello from Rocky!")<br><br>main()</span></div>';
+                terminalBody.appendChild(shimmerDiv);
+                terminalBody.scrollTop = terminalBody.scrollHeight;
+
+                // After shimmer completes, show the loading dots
+                setTimeout(() => {
+                    addBlank();
+                    // Create loading dots
+                    const dotsLine = document.createElement('div');
+                    dotsLine.className = 'line';
+                    dotsLine.innerHTML = '<span class="output" style="margin-right:8px;">Analyzing</span><span class="loading-dots-container"><span class="loading-dots-grid" id="loading-grid"></span></span>';
+                    terminalBody.appendChild(dotsLine);
+                    terminalBody.scrollTop = terminalBody.scrollHeight;
+
+                    const grid = document.getElementById('loading-grid');
+                    // Create 8 dots in a 4x2 rectangle
+                    for (let i = 0; i < 8; i++) {
+                        const dot = document.createElement('span');
+                        dot.className = 'loading-dot';
+                        dot.id = 'dot-' + i;
+                        grid.appendChild(dot);
+                    }
+
+                    // Animate dots clockwise: top-left to top-right (0,1,2,3), then bottom-right to bottom-left (7,6,5,4)
+                    const clockwiseOrder = [0, 1, 2, 3, 7, 6, 5, 4];
+                    let dotStep = 0;
+                    let dotCycles = 0;
+
+                    const dotInterval = setInterval(() => {
+                        // Clear all
+                        for (let i = 0; i < 8; i++) {
+                            document.getElementById('dot-' + i).classList.remove('active');
+                        }
+                        // Light current and trailing
+                        const curr = clockwiseOrder[dotStep % 8];
+                        const prev = clockwiseOrder[(dotStep - 1 + 8) % 8];
+                        document.getElementById('dot-' + curr).classList.add('active');
+                        document.getElementById('dot-' + prev).style.opacity = '0.5';
+                        setTimeout(() => {
+                            const el = document.getElementById('dot-' + prev);
+                            if (el && !el.classList.contains('active')) el.style.opacity = '0.2';
+                        }, 100);
+
+                        dotStep++;
+                        if (dotStep % 8 === 0) dotCycles++;
+                        if (dotCycles >= 3) {
+                            clearInterval(dotInterval);
+                            // Complete - show result
+                            setTimeout(() => {
+                                dotsLine.remove();
+                                addLine('<span style="color: var(--green);">&#x2713; File read successfully (4 lines)</span>');
+                                addBlank();
+                                // Final cursor
+                                addLine('<span style="color: var(--accent2); font-weight:600;">You: </span><span class="typing-cursor"></span>');
+                                terminalBody.scrollTop = terminalBody.scrollHeight;
+                            }, 200);
+                        }
+                    }, 150);
+                }, 1600);
+            }, LINE_DELAY);
+        });
+    }
+
+    // Start terminal animation when it scrolls into view
     const terminalEl = document.querySelector('.terminal');
     const terminalObserver = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting) {
-            setTimeout(addTerminalLine, 800);
+            setTimeout(runTerminalAnimation, 600);
             terminalObserver.disconnect();
         }
     }, { threshold: 0.3 });
