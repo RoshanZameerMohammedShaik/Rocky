@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rocky.AI — Your Local AI Assistant</title>
+    <meta name="description" content="A fully local, open-source agentic AI CLI tool. No cloud, no API keys, no external apps. Just type Rocky.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ===== RESET & BASE ===== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-code: #1a1a2e;
+            --text: #e4e4ef;
+            --text-dim: #8888a0;
+            --accent: #00d4ff;
+            --accent2: #7c5cfc;
+            --accent-glow: rgba(0, 212, 255, 0.15);
+            --green: #00e88f;
+            --red: #ff4d6a;
+            --orange: #ffaa2c;
+            --border: #1e1e30;
+            --radius: 12px;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* ===== LAYOUT ===== */
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+        section { padding: 100px 0; }
+
+        /* ===== NAVIGATION ===== */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 16px 0;
+            backdrop-filter: blur(20px);
+            background: rgba(10, 10, 15, 0.8);
+            border-bottom: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .nav-links { display: flex; gap: 32px; list-style: none; }
+
+        .nav-links a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover { color: var(--accent); }
+
+        /* ===== HERO ===== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            padding-top: 80px;
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 50% 20%, rgba(0, 212, 255, 0.08), transparent),
+                radial-gradient(ellipse 60% 40% at 30% 60%, rgba(124, 92, 252, 0.06), transparent);
+            pointer-events: none;
+        }
+
+        .hero-content { position: relative; z-index: 1; }
+
+        .ascii-art {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: clamp(0.4rem, 1.8vw, 0.85rem);
+            line-height: 1.2;
+            color: var(--accent);
+            white-space: pre;
+            margin-bottom: 32px;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease forwards;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .hero h1 {
+            font-size: clamp(1.8rem, 5vw, 3.5rem);
+            font-weight: 700;
+            margin-bottom: 20px;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease 0.2s forwards;
+        }
+
+        .hero h1 .gradient {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            color: var(--text-dim);
+            max-width: 600px;
+            margin: 0 auto 40px;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease 0.4s forwards;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease 0.6s forwards;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 32px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff;
+            box-shadow: 0 4px 25px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 40px rgba(0, 212, 255, 0.45);
+        }
+
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .btn-primary:hover::after { opacity: 1; }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent);
+            background: var(--bg-code);
+            transform: translateY(-2px);
+        }
+
+        .btn svg { width: 20px; height: 20px; }
+
+        /* ===== BADGES ===== */
+        .badge-row {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease 0.3s forwards;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+        }
+
+        .badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .badge .dot.green { background: var(--green); box-shadow: 0 0 8px rgba(0, 232, 143, 0.5); }
+        .badge .dot.blue { background: var(--accent); box-shadow: 0 0 8px rgba(0, 212, 255, 0.5); }
+        .badge .dot.purple { background: var(--accent2); box-shadow: 0 0 8px rgba(124, 92, 252, 0.5); }
+
+        /* ===== SECTION HEADERS ===== */
+        .section-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: clamp(1.6rem, 3.5vw, 2.5rem);
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .section-desc {
+            color: var(--text-dim);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin-bottom: 48px;
+        }
+
+        /* ===== FEATURE GRID ===== */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(0, 212, 255, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .feature-card:hover::before { opacity: 1; }
+
+        .feature-icon {
+            font-size: 1.8rem;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .feature-card h3 {
+            font-size: 1.15rem;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .feature-card p {
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* ===== DOES / DOESN'T ===== */
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 700px) {
+            .comparison { grid-template-columns: 1fr; }
+        }
+
+        .comparison-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+        }
+
+        .comparison-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .comparison-card ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .comparison-card li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.95rem;
+            color: var(--text-dim);
+            line-height: 1.5;
+        }
+
+        .comparison-card li .icon {
+            flex-shrink: 0;
+            margin-top: 2px;
+            font-size: 1rem;
+        }
+
+        .does h3 { color: var(--green); }
+        .does .icon { color: var(--green); }
+        .doesnt h3 { color: var(--red); }
+        .doesnt .icon { color: var(--red); }
+
+        /* ===== INSTALL SECTION ===== */
+        .install-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            max-width: 700px;
+        }
+
+        .install-step {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .step-num {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .step-content { flex: 1; }
+        .step-content h4 { font-size: 1.05rem; margin-bottom: 8px; }
+        .step-content p { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 12px; }
+
+        /* ===== CODE BLOCKS ===== */
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .code-block .prompt { color: var(--accent); user-select: none; }
+        .code-block .cmd { color: var(--text); }
+        .code-block .comment { color: var(--text-dim); }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--border);
+            border: none;
+            color: var(--text-dim);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover { background: var(--accent); color: #fff; }
+
+        /* ===== COMMANDS TABLE ===== */
+        .commands-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .commands-table th {
+            text-align: left;
+            padding: 14px 20px;
+            background: var(--bg-code);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .commands-table td {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.95rem;
+        }
+
+        .commands-table tr:last-child td { border-bottom: none; }
+
+        .commands-table .cmd-name {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .commands-table .cmd-desc { color: var(--text-dim); }
+
+        /* ===== MODELS TABLE ===== */
+        .models-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .model-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            transition: all 0.3s;
+        }
+
+        .model-card:hover {
+            border-color: rgba(0, 212, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .model-card.recommended {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.1);
+        }
+
+        .model-card .tag {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 4px 10px;
+            border-radius: 50px;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+
+        .model-card.recommended .tag {
+            background: rgba(0, 212, 255, 0.15);
+            color: var(--accent);
+        }
+
+        .model-card .tag.default {
+            background: rgba(0, 212, 255, 0.15);
+            color: var(--accent);
+        }
+
+        .model-card h4 { font-size: 1.1rem; margin-bottom: 8px; }
+
+        .model-card .specs {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 12px;
+        }
+
+        .model-card .spec {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+        }
+
+        .model-card .spec .label { color: var(--text-dim); }
+        .model-card .spec .value { font-weight: 500; }
+
+        /* ===== PERMISSIONS ===== */
+        .perm-demo {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            max-width: 650px;
+        }
+
+        .perm-demo .line { margin-bottom: 2px; }
+        .perm-demo .yellow { color: var(--orange); }
+        .perm-demo .cyan { color: var(--accent); }
+        .perm-demo .green { color: var(--green); }
+        .perm-demo .dim { color: var(--text-dim); }
+        .perm-demo .bold { font-weight: 700; color: var(--text); }
+
+        /* ===== FOOTER ===== */
+        footer {
+            padding: 60px 0 40px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .footer-logo {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 16px;
+        }
+
+        .footer-built {
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+
+        .footer-built a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .footer-built a:hover { color: var(--accent2); }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .footer-links a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover { color: var(--accent); }
+
+        .footer-copy {
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            margin-top: 24px;
+            opacity: 0.6;
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+
+        .animate-on-scroll.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Stagger children */
+        .animate-on-scroll.visible .feature-card:nth-child(1) { transition-delay: 0s; }
+        .animate-on-scroll.visible .feature-card:nth-child(2) { transition-delay: 0.1s; }
+        .animate-on-scroll.visible .feature-card:nth-child(3) { transition-delay: 0.2s; }
+        .animate-on-scroll.visible .feature-card:nth-child(4) { transition-delay: 0.3s; }
+        .animate-on-scroll.visible .feature-card:nth-child(5) { transition-delay: 0.4s; }
+        .animate-on-scroll.visible .feature-card:nth-child(6) { transition-delay: 0.5s; }
+
+        /* ===== TERMINAL DEMO ===== */
+        .terminal {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            max-width: 700px;
+            margin: 40px auto 0;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease 0.8s forwards;
+        }
+
+        .terminal-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .terminal-dot.red { background: #ff5f57; }
+        .terminal-dot.yellow { background: #febc2e; }
+        .terminal-dot.green { background: #28c840; }
+
+        .terminal-title {
+            flex: 1;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .terminal-body {
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            min-height: 200px;
+        }
+
+        .terminal-body .line { margin-bottom: 2px; }
+        .terminal-body .prompt-char { color: var(--green); }
+        .terminal-body .output { color: var(--text-dim); }
+        .terminal-body .accent { color: var(--accent); }
+        .terminal-body .typing-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: var(--accent);
+            animation: pulse 1s infinite;
+            vertical-align: text-bottom;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            section { padding: 60px 0; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .models-grid { grid-template-columns: 1fr; }
+            .hero-actions { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+    <div class="container">
+        <a href="#" class="nav-logo">Rocky.AI</a>
+        <ul class="nav-links">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#install">Install</a></li>
+            <li><a href="#usage">Usage</a></li>
+            <li><a href="#models">Models</a></li>
+            <li><a href="https://github.com/RoshanZameerMohammedShaik/Rocky" target="_blank">GitHub</a></li>
+        </ul>
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+        <div class="ascii-art" aria-hidden="true">
+██████╗  ██████╗  ██████╗██╗  ██╗██╗   ██╗     █████╗ ██╗
+██╔══██╗██╔═══██╗██╔════╝██║ ██╔╝╚██╗ ██╔╝    ██╔══██╗██║
+██████╔╝██║   ██║██║     █████╔╝  ╚████╔╝     ███████║██║
+██╔══██╗██║   ██║██║     ██╔═██╗   ╚██╔╝      ██╔══██║██║
+██║  ██║╚██████╔╝╚██████╗██║  ██╗   ██║    ██╗██║  ██║██║
+╚═╝  ╚═╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝   ╚═╝    ╚═╝╚═╝  ╚═╝╚═╝</div>
+
+        <h1>Your AI. <span class="gradient">Your machine.</span><br>No cloud required.</h1>
+
+        <div class="badge-row">
+            <span class="badge"><span class="dot green"></span> 100% Local</span>
+            <span class="badge"><span class="dot blue"></span> Open Source</span>
+            <span class="badge"><span class="dot purple"></span> Zero API Keys</span>
+        </div>
+
+        <p>A fully local, agentic AI assistant that runs entirely on your machine. No Ollama, no cloud, no external apps. Just type <strong>Rocky</strong>.</p>
+
+        <div class="hero-actions">
+            <a href="#install" class="btn btn-primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download Rocky
+            </a>
+            <a href="https://github.com/RoshanZameerMohammedShaik/Rocky" target="_blank" class="btn btn-secondary">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                View Source
+            </a>
+        </div>
+
+        <!-- Terminal demo -->
+        <div class="terminal">
+            <div class="terminal-bar">
+                <span class="terminal-dot red"></span>
+                <span class="terminal-dot yellow"></span>
+                <span class="terminal-dot green"></span>
+                <span class="terminal-title">Terminal</span>
+            </div>
+            <div class="terminal-body" id="terminal-demo">
+                <!-- Filled by JS animation -->
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+    <div class="container">
+        <div class="animate-on-scroll">
+            <div class="section-label">Features</div>
+            <h2 class="section-title">Everything runs locally</h2>
+            <p class="section-desc">Rocky embeds its own AI engine. No background services, no separate apps, no internet required after install.</p>
+        </div>
+
+        <div class="feature-grid animate-on-scroll">
+            <div class="feature-card">
+                <span class="feature-icon">&#x1F9E0;</span>
+                <h3>Embedded AI Engine</h3>
+                <p>Runs Qwen2.5 models via llama.cpp directly in-process. No Ollama, no LM Studio, no background service eating your RAM.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">&#x1F4C1;</span>
+                <h3>File Operations</h3>
+                <p>Read, write, edit, search, and list files. Rocky handles CRUD with diff previews and safety checks.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">&#x1F4BB;</span>
+                <h3>Shell Commands</h3>
+                <p>Execute terminal commands with a permission system. Dangerous commands are flagged before execution.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">&#x1F310;</span>
+                <h3>Web Search</h3>
+                <p>Search DuckDuckGo and fetch web pages. Works when online, gracefully handles offline mode.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">&#x1F500;</span>
+                <h3>Git Integration</h3>
+                <p>Check status, view diffs, browse logs, and create commits directly from the conversation.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">&#x1F4DA;</span>
+                <h3>Knowledge Base</h3>
+                <p>Index your files into a searchable knowledge base. Rocky remembers your codebase.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">&#x26A1;</span>
+                <h3>GPU Auto-Detection</h3>
+                <p>Automatically uses Metal on macOS, CUDA on NVIDIA, Vulkan on AMD. Falls back to CPU gracefully.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">&#x1F4BE;</span>
+                <h3>Session Management</h3>
+                <p>Save and resume conversations. Pick up exactly where you left off.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">&#x1F3A7;</span>
+                <h3>Audio Transcription</h3>
+                <p>Transcribe audio files with Whisper. Optional install, works offline once set up.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- WHAT IT DOES / DOESN'T -->
+<section id="philosophy">
+    <div class="container">
+        <div class="animate-on-scroll">
+            <div class="section-label">Philosophy</div>
+            <h2 class="section-title">What Rocky is (and isn't)</h2>
+            <p class="section-desc">Rocky has strong opinions about what a local AI assistant should be.</p>
+        </div>
+
+        <div class="comparison animate-on-scroll">
+            <div class="comparison-card does">
+                <h3><span>&#x2705;</span> What Rocky Does</h3>
+                <ul>
+                    <li><span class="icon">&#x2713;</span> Runs 100% on your machine &mdash; your data never leaves</li>
+                    <li><span class="icon">&#x2713;</span> Works offline after first model download</li>
+                    <li><span class="icon">&#x2713;</span> Installs with one command: <code>pip install rocky-ai</code></li>
+                    <li><span class="icon">&#x2713;</span> Launches with one command: <code>Rocky</code></li>
+                    <li><span class="icon">&#x2713;</span> Auto-downloads its AI model on first run</li>
+                    <li><span class="icon">&#x2713;</span> Reads, writes, and edits your files</li>
+                    <li><span class="icon">&#x2713;</span> Runs shell commands with your permission</li>
+                    <li><span class="icon">&#x2713;</span> Uses your GPU automatically if available</li>
+                    <li><span class="icon">&#x2713;</span> Asks before doing anything dangerous</li>
+                </ul>
+            </div>
+            <div class="comparison-card doesnt">
+                <h3><span>&#x274C;</span> What Rocky Doesn't Do</h3>
+                <ul>
+                    <li><span class="icon">&#x2717;</span> No cloud &mdash; zero data sent to any server</li>
+                    <li><span class="icon">&#x2717;</span> No API keys or accounts required</li>
+                    <li><span class="icon">&#x2717;</span> No Ollama or external AI apps installed</li>
+                    <li><span class="icon">&#x2717;</span> No background services eating your RAM</li>
+                    <li><span class="icon">&#x2717;</span> No telemetry or usage tracking</li>
+                    <li><span class="icon">&#x2717;</span> No system tray icons or hidden UI</li>
+                    <li><span class="icon">&#x2717;</span> No internet required after setup</li>
+                    <li><span class="icon">&#x2717;</span> No subscription or paid tier</li>
+                    <li><span class="icon">&#x2717;</span> Never runs commands without your approval</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- INSTALL -->
+<section id="install">
+    <div class="container">
+        <div class="animate-on-scroll">
+            <div class="section-label">Get Started</div>
+            <h2 class="section-title">Install in 60 seconds</h2>
+            <p class="section-desc">One install command. One run command. Works on macOS, Windows, and Linux.</p>
+        </div>
+
+        <div class="install-steps animate-on-scroll">
+            <div class="install-step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <h4>Install Rocky</h4>
+                    <p>Requires Python 3.10+. This installs Rocky and its embedded AI engine.</p>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        <span class="prompt">$ </span><span class="cmd">pip install rocky-ai</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="install-step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <h4>Run Rocky</h4>
+                    <p>On first run, Rocky auto-downloads its AI model (~2.2 GB). After that, it works fully offline.</p>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        <span class="prompt">$ </span><span class="cmd">Rocky</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="install-step">
+                <div class="step-num">&#x2728;</div>
+                <div class="step-content">
+                    <h4>That's it</h4>
+                    <p>No configuration needed. No accounts. No API keys. Just start chatting.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="animate-on-scroll" style="margin-top: 48px;">
+            <h4 style="margin-bottom: 16px; color: var(--text-dim);">Platform-specific notes</h4>
+            <div class="code-block" style="max-width: 700px;">
+                <span class="comment"># macOS &mdash; Metal GPU acceleration works automatically</span><br>
+                <span class="prompt">$ </span><span class="cmd">pip install rocky-ai</span><br><br>
+                <span class="comment"># Windows/Linux with NVIDIA GPU &mdash; for CUDA acceleration</span><br>
+                <span class="prompt">$ </span><span class="cmd">CMAKE_ARGS="-DGGML_CUDA=on" pip install rocky-ai</span><br><br>
+                <span class="comment"># From source</span><br>
+                <span class="prompt">$ </span><span class="cmd">git clone https://github.com/RoshanZameerMohammedShaik/Rocky.git</span><br>
+                <span class="prompt">$ </span><span class="cmd">cd Rocky && pip install -e .</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- USAGE & COMMANDS -->
+<section id="usage">
+    <div class="container">
+        <div class="animate-on-scroll">
+            <div class="section-label">Usage</div>
+            <h2 class="section-title">Commands & Controls</h2>
+            <p class="section-desc">Rocky uses slash commands for built-in operations. Everything else is natural conversation.</p>
+        </div>
+
+        <div class="animate-on-scroll" style="max-width: 700px;">
+            <table class="commands-table">
+                <thead>
+                    <tr>
+                        <th>Command</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="cmd-name">/help</td>
+                        <td class="cmd-desc">Show all available commands</td>
+                    </tr>
+                    <tr>
+                        <td class="cmd-name">/quit</td>
+                        <td class="cmd-desc">Exit Rocky (also: /exit)</td>
+                    </tr>
+                    <tr>
+                        <td class="cmd-name">/clear</td>
+                        <td class="cmd-desc">Clear conversation history</td>
+                    </tr>
+                    <tr>
+                        <td class="cmd-name">/save [name]</td>
+                        <td class="cmd-desc">Save current session to disk</td>
+                    </tr>
+                    <tr>
+                        <td class="cmd-name">/load &lt;name&gt;</td>
+                        <td class="cmd-desc">Load a previously saved session</td>
+                    </tr>
+                    <tr>
+                        <td class="cmd-name">/sessions</td>
+                        <td class="cmd-desc">List all saved sessions</td>
+                    </tr>
+                    <tr>
+                        <td class="cmd-name">/model</td>
+                        <td class="cmd-desc">Show info about the current model</td>
+                    </tr>
+                    <tr>
+                        <td class="cmd-name">/models</td>
+                        <td class="cmd-desc">List all available models with download status</td>
+                    </tr>
+                    <tr>
+                        <td class="cmd-name">/trust</td>
+                        <td class="cmd-desc">Enable trust mode &mdash; skip permission prompts for session</td>
+                    </tr>
+                    <tr>
+                        <td class="cmd-name">/version</td>
+                        <td class="cmd-desc">Show Rocky version</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- PERMISSIONS -->
+<section id="permissions">
+    <div class="container">
+        <div class="animate-on-scroll">
+            <div class="section-label">Safety</div>
+            <h2 class="section-title">Permission System</h2>
+            <p class="section-desc">Rocky never runs commands without asking. Dangerous operations get an extra warning.</p>
+        </div>
+
+        <div class="animate-on-scroll">
+            <div class="perm-demo">
+                <div class="line"><span class="dim">Rocky.AI wants to run:</span></div>
+                <div class="line"><span class="bold">$ rm -rf ./build/</span></div>
+                <div class="line"><span class="yellow">&#x26A0; Recursive deletion with wildcard</span></div>
+                <div class="line">&nbsp;</div>
+                <div class="line"><span class="bold">[A]</span><span class="dim">llow once</span> &nbsp;&middot;&nbsp; <span class="bold">[T]</span><span class="dim">rust for session</span> &nbsp;&middot;&nbsp; <span class="bold">[D]</span><span class="dim">eny</span></div>
+                <div class="line"><span class="cyan">Your choice: </span><span class="green">a</span></div>
+            </div>
+
+            <div style="margin-top: 32px; max-width: 600px;">
+                <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
+                    <li style="display: flex; gap: 10px; color: var(--text-dim);">
+                        <strong style="color: var(--text); min-width: 110px;">Allow once</strong>
+                        Run this single command, ask again next time
+                    </li>
+                    <li style="display: flex; gap: 10px; color: var(--text-dim);">
+                        <strong style="color: var(--text); min-width: 110px;">Trust session</strong>
+                        Skip all permission prompts for the rest of this session
+                    </li>
+                    <li style="display: flex; gap: 10px; color: var(--text-dim);">
+                        <strong style="color: var(--text); min-width: 110px;">Deny</strong>
+                        Block the command &mdash; Rocky will suggest alternatives
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- MODELS -->
+<section id="models">
+    <div class="container">
+        <div class="animate-on-scroll">
+            <div class="section-label">Models</div>
+            <h2 class="section-title">Choose your model</h2>
+            <p class="section-desc">Rocky auto-selects the best model for your hardware. Switch anytime with <code>/models</code>.</p>
+        </div>
+
+        <div class="models-grid animate-on-scroll">
+            <div class="model-card">
+                <span class="tag">Lightweight</span>
+                <h4>Qwen2.5-0.5B</h4>
+                <div class="specs">
+                    <div class="spec"><span class="label">Size</span><span class="value">~530 MB</span></div>
+                    <div class="spec"><span class="label">RAM needed</span><span class="value">4 GB+</span></div>
+                    <div class="spec"><span class="label">Quantization</span><span class="value">Q8_0</span></div>
+                    <div class="spec"><span class="label">Best for</span><span class="value">Low-RAM systems</span></div>
+                </div>
+            </div>
+            <div class="model-card recommended">
+                <span class="tag default">Default &middot; Recommended</span>
+                <h4>Qwen2.5-3B Instruct</h4>
+                <div class="specs">
+                    <div class="spec"><span class="label">Size</span><span class="value">~2.2 GB</span></div>
+                    <div class="spec"><span class="label">RAM needed</span><span class="value">8 GB+</span></div>
+                    <div class="spec"><span class="label">Quantization</span><span class="value">Q5_K_M</span></div>
+                    <div class="spec"><span class="label">Best for</span><span class="value">Best balance</span></div>
+                </div>
+            </div>
+            <div class="model-card">
+                <span class="tag">High Quality</span>
+                <h4>Qwen2.5-7B Instruct</h4>
+                <div class="specs">
+                    <div class="spec"><span class="label">Size</span><span class="value">~3.5 GB</span></div>
+                    <div class="spec"><span class="label">RAM needed</span><span class="value">12 GB+</span></div>
+                    <div class="spec"><span class="label">Quantization</span><span class="value">Q3_K_M</span></div>
+                    <div class="spec"><span class="label">Best for</span><span class="value">Max quality</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    <div class="container">
+        <div class="footer-logo">Rocky.AI</div>
+        <p class="footer-built">
+            Built by <a href="https://www.linkedin.com/in/rz-97" target="_blank">Roshan Zameer</a>
+        </p>
+        <div class="footer-links">
+            <a href="https://github.com/RoshanZameerMohammedShaik/Rocky" target="_blank">GitHub</a>
+            <a href="https://www.linkedin.com/in/rz-97" target="_blank">LinkedIn</a>
+            <a href="#install">Download</a>
+        </div>
+        <p class="footer-copy">MIT License &middot; Open Source &middot; Made with local AI</p>
+    </div>
+</footer>
+
+<script>
+    // ===== Scroll animations =====
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+    document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+
+    // ===== Copy code button =====
+    function copyCode(btn) {
+        const block = btn.parentElement;
+        const cmd = block.querySelector('.cmd');
+        if (cmd) {
+            navigator.clipboard.writeText(cmd.textContent).then(() => {
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy', 2000);
+            });
+        }
+    }
+
+    // ===== Terminal typing animation =====
+    const terminalLines = [
+        { type: 'input', text: 'pip install rocky-ai' },
+        { type: 'output', text: 'Successfully installed rocky-ai-0.2.0' },
+        { type: 'blank' },
+        { type: 'input', text: 'Rocky' },
+        { type: 'accent', text: '██████╗  ██████╗  ██████╗██╗  ██╗██╗   ██╗' },
+        { type: 'accent', text: '██╔══██╗██╔═══██╗██╔════╝██║ ██╔╝╚██╗ ██╔╝' },
+        { type: 'accent', text: '██████╔╝██║   ██║██║     █████╔╝  ╚████╔╝ ' },
+        { type: 'accent', text: '██╔══██╗██║   ██║██║     ██╔═██╗   ╚██╔╝  ' },
+        { type: 'accent', text: '██║  ██║╚██████╔╝╚██████╗██║  ██╗   ██║   ' },
+        { type: 'accent', text: '╚═╝  ╚═╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝   ╚═╝   ' },
+        { type: 'blank' },
+        { type: 'output', text: '  Your local AI assistant  ·  v0.2.0' },
+        { type: 'output', text: '  Running Online  ·  Type /help for commands' },
+        { type: 'blank' },
+        { type: 'output', text: '&#x2705; Rocky.AI is ready!' },
+        { type: 'blank' },
+        { type: 'prompt', text: 'You: ' },
+    ];
+
+    const terminalBody = document.getElementById('terminal-demo');
+    let lineIndex = 0;
+
+    function addTerminalLine() {
+        if (lineIndex >= terminalLines.length) return;
+
+        const line = terminalLines[lineIndex];
+        const div = document.createElement('div');
+        div.className = 'line';
+
+        if (line.type === 'blank') {
+            div.innerHTML = '&nbsp;';
+        } else if (line.type === 'input') {
+            div.innerHTML = '<span class="prompt-char">$ </span>' + line.text;
+        } else if (line.type === 'output') {
+            div.innerHTML = '<span class="output">' + line.text + '</span>';
+        } else if (line.type === 'accent') {
+            div.innerHTML = '<span class="accent" style="font-size:0.55rem;line-height:1;">' + line.text + '</span>';
+        } else if (line.type === 'prompt') {
+            div.innerHTML = '<span class="prompt-char">' + line.text + '</span><span class="typing-cursor"></span>';
+        }
+
+        terminalBody.appendChild(div);
+        terminalBody.scrollTop = terminalBody.scrollHeight;
+        lineIndex++;
+
+        const delay = line.type === 'input' ? 600 : line.type === 'accent' ? 40 : line.type === 'blank' ? 200 : 150;
+        setTimeout(addTerminalLine, delay);
+    }
+
+    // Start terminal animation when it scrolls into view (or on load if visible)
+    const terminalEl = document.querySelector('.terminal');
+    const terminalObserver = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+            setTimeout(addTerminalLine, 800);
+            terminalObserver.disconnect();
+        }
+    }, { threshold: 0.3 });
+    terminalObserver.observe(terminalEl);
+
+    // ===== Smooth nav background on scroll =====
+    window.addEventListener('scroll', () => {
+        const nav = document.querySelector('nav');
+        if (window.scrollY > 50) {
+            nav.style.background = 'rgba(10, 10, 15, 0.95)';
+        } else {
+            nav.style.background = 'rgba(10, 10, 15, 0.8)';
+        }
+    });
+</script>
+
+</body>
+</html>
