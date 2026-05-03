@@ -1,139 +1,185 @@
 #!/bin/bash
-# Rocky.AI Installation Script
-# Installs Rocky.AI with embedded local LLM — no Ollama, no external apps
+# Rocky.AI Installer
+# Checks prerequisites, installs everything needed, configures Rocky.
+# Usage: ./install.sh  or  curl -sSL <url> | bash
+# After install, just type: Rocky
 
 set -e
 
-# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 BOLD='\033[1m'
+DIM='\033[2m'
 
-# ASCII Art
-echo -e "${CYAN}"
-cat << 'EOF'
-██████╗  ██████╗  ██████╗██╗  ██╗██╗   ██╗     █████╗ ██╗
-██╔══██╗██╔═══██╗██╔════╝██║ ██╔╝╚██╗ ██╔╝    ██╔══██╗██║
-██████╔╝██║   ██║██║     █████╔╝  ╚████╔╝     ███████║██║
-██╔══██╗██║   ██║██║     ██╔═██╗   ╚██╔╝      ██╔══██║██║
-██║  ██║╚██████╔╝╚██████╗██║  ██╗   ██║    ██╗██║  ██║██║
-╚═╝  ╚═╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝   ╚═╝    ╚═╝╚═╝  ╚═╝╚═╝
-EOF
-echo -e "${NC}"
-echo -e "${BOLD}Rocky.AI Installer${NC} — Fully local AI, zero external apps"
-echo ""
+ok()   { echo -e "  ${GREEN}\xE2\x9C\x94${NC} $1"; }
+warn() { echo -e "  ${YELLOW}\xE2\x9A\xA0${NC} $1"; }
+fail() { echo -e "  ${RED}\xE2\x9C\x98${NC} $1"; }
+info() { echo -e "  ${CYAN}\xE2\x84\xB9${NC} $1"; }
 
-# Detect OS
+command_exists() { command -v "$1" >/dev/null 2>&1; }
+
 detect_os() {
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        echo "macos"
-    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        echo "linux"
-    else
-        echo "unknown"
-    fi
+    case "$OSTYPE" in
+        darwin*)  echo "macos" ;;
+        linux*)   echo "linux" ;;
+        msys*|cygwin*) echo "windows" ;;
+        *)        echo "unknown" ;;
+    esac
 }
 
-# Detect RAM
 detect_ram() {
     if [[ "$(detect_os)" == "macos" ]]; then
-        sysctl -n hw.memsize | awk '{print int($1/1024/1024/1024)}'
+        sysctl -n hw.memsize 2>/dev/null | awk '{print int($1/1024/1024/1024)}'
     else
-        free -g | awk '/^Mem:/{print $2}'
+        free -g 2>/dev/null | awk '/^Mem:/{print $2}' || echo "8"
     fi
 }
 
-# Check command exists
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
-}
+echo ""
+echo -e "${CYAN}${BOLD}"
+echo "  ____            _            _    ___"
+echo " |  _ \\ ___   ___| | ___   _  / \\  |_ _|"
+echo " | |_) / _ \\ / __| |/ / | | |/ _ \\  | |"
+echo " |  _ < (_) | (__|   <| |_| / ___ \\ | |"
+echo " |_| \\_\\___/ \\___|_|\\_\\\\__, /_/   \\_\\___|"
+echo "                       |___/"
+echo -e "${NC}"
+echo -e "  ${BOLD}Rocky.AI Installer${NC}"
+echo -e "  ${DIM}Fully local AI \u2022 Zero external apps \u2022 One command to run${NC}"
+echo ""
+echo -e "  ${DIM}\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80${NC}"
+echo ""
 
-# Print helpers
-print_status() { echo -e "${GREEN}✓${NC} $1"; }
-print_warning() { echo -e "${YELLOW}⚠${NC} $1"; }
-print_error() { echo -e "${RED}✗${NC} $1"; }
-print_info() { echo -e "${CYAN}ℹ${NC} $1"; }
+OS=$(detect_os)
+RAM=$(detect_ram)
+ERRORS=0
 
-main() {
-    OS=$(detect_os)
-    RAM=$(detect_ram)
+echo -e "  ${BOLD}Checking prerequisites...${NC}"
+echo ""
 
-    echo "Detecting system..."
-    echo -e "  OS: ${BOLD}$OS${NC}"
-    echo -e "  RAM: ${BOLD}${RAM}GB${NC}"
-
-    if [[ "$RAM" -lt 8 ]]; then
-        print_warning "Rocky.AI works best with 8GB+ RAM. You have ${RAM}GB."
-        print_info "Will use the lightweight 1.7B model for your system."
-        echo ""
-    fi
-
-    echo ""
-    echo "═══════════════════════════════════════════════════════════"
-    echo "Installation Steps"
-    echo "═══════════════════════════════════════════════════════════"
-    echo ""
-
-    # Step 1: Python
-    echo -e "${BOLD}[1/3] Checking Python...${NC}"
-    if command_exists python3; then
-        PYTHON_VERSION=$(python3 --version | cut -d' ' -f2)
-        PYTHON_MAJOR=$(echo "$PYTHON_VERSION" | cut -d. -f1)
-        PYTHON_MINOR=$(echo "$PYTHON_VERSION" | cut -d. -f2)
-        if [[ "$PYTHON_MAJOR" -ge 3 && "$PYTHON_MINOR" -ge 10 ]]; then
-            print_status "Python $PYTHON_VERSION found"
-        else
-            print_error "Python 3.10+ required. Found $PYTHON_VERSION"
-            exit 1
-        fi
+# 1) Python 3.10+
+if command_exists python3; then
+    PY_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")' 2>/dev/null)
+    PY_MAJOR=$(echo "$PY_VERSION" | cut -d. -f1)
+    PY_MINOR=$(echo "$PY_VERSION" | cut -d. -f2)
+    if [[ "$PY_MAJOR" -ge 3 && "$PY_MINOR" -ge 10 ]]; then
+        ok "Python $PY_VERSION"
     else
-        print_error "Python 3 not found. Please install Python 3.10 or later."
+        fail "Python $PY_VERSION found, but 3.10+ required"
+        ERRORS=$((ERRORS + 1))
+    fi
+elif command_exists python; then
+    PY_VERSION=$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")' 2>/dev/null)
+    PY_MAJOR=$(echo "$PY_VERSION" | cut -d. -f1)
+    PY_MINOR=$(echo "$PY_VERSION" | cut -d. -f2)
+    if [[ "$PY_MAJOR" -ge 3 && "$PY_MINOR" -ge 10 ]]; then
+        ok "Python $PY_VERSION"
+    else
+        fail "Python $PY_VERSION found, but 3.10+ required"
+        ERRORS=$((ERRORS + 1))
+    fi
+else
+    fail "Python not found. Install Python 3.10+ from https://python.org"
+    ERRORS=$((ERRORS + 1))
+fi
+
+# 2) pip
+if command_exists pip3 || command_exists pip; then
+    ok "pip"
+else
+    fail "pip not found. Install pip: python3 -m ensurepip"
+    ERRORS=$((ERRORS + 1))
+fi
+
+# 3) C compiler (needed for llama-cpp-python)
+if command_exists gcc || command_exists cc || command_exists clang; then
+    COMPILER=$(command -v clang || command -v gcc || command -v cc)
+    ok "C compiler ($(basename "$COMPILER"))"
+else
+    if [[ "$OS" == "macos" ]]; then
+        warn "No C compiler found. Installing Xcode Command Line Tools..."
+        xcode-select --install 2>/dev/null || true
+        info "Run this installer again after Xcode tools finish installing"
         exit 1
-    fi
-
-    # Step 2: FFmpeg (optional)
-    echo ""
-    echo -e "${BOLD}[2/3] Checking FFmpeg (optional)...${NC}"
-    if command_exists ffmpeg; then
-        print_status "FFmpeg found — video/audio processing available"
     else
-        print_warning "FFmpeg not found. Video processing will be limited."
-        if [[ "$OS" == "macos" ]]; then
-            print_info "Install with: brew install ffmpeg"
-        elif [[ "$OS" == "linux" ]]; then
-            print_info "Install with: sudo apt install ffmpeg"
-        fi
+        fail "No C compiler found. Install: sudo apt install build-essential (Ubuntu) or equivalent"
+        ERRORS=$((ERRORS + 1))
     fi
+fi
 
-    # Step 3: Rocky.AI
-    echo ""
-    echo -e "${BOLD}[3/3] Installing Rocky.AI...${NC}"
-    print_info "This installs Rocky.AI with its embedded AI engine."
-    print_info "No external AI applications will be installed."
-    echo ""
+# 4) git (optional but recommended)
+if command_exists git; then
+    ok "git"
+else
+    warn "git not found (optional, needed for source install)"
+fi
 
-    pip3 install --user rocky-ai 2>/dev/null || pip3 install --user -e . 2>/dev/null || {
-        print_info "Installing from source..."
-        pip3 install --user llama-cpp-python httpx rich prompt-toolkit pyyaml beautifulsoup4
-        print_status "Dependencies installed"
-    }
-    print_status "Rocky.AI installed"
+# 5) FFmpeg (optional)
+if command_exists ffmpeg; then
+    ok "FFmpeg (video/audio processing available)"
+else
+    warn "FFmpeg not found (optional, for video/audio)"
+    if [[ "$OS" == "macos" ]]; then
+        info "Install with: brew install ffmpeg"
+    elif [[ "$OS" == "linux" ]]; then
+        info "Install with: sudo apt install ffmpeg"
+    fi
+fi
 
-    # Done
-    echo ""
-    echo "═══════════════════════════════════════════════════════════"
-    echo -e "${GREEN}${BOLD}Installation Complete!${NC}"
-    echo "═══════════════════════════════════════════════════════════"
-    echo ""
-    echo "To start Rocky.AI, run:"
-    echo -e "  ${BOLD}Rocky${NC}"
-    echo ""
-    echo "On first run, Rocky.AI will download its AI model (~3GB)."
-    echo "Everything runs locally — no cloud, no external apps."
-    echo ""
-}
+# 6) RAM check
+if [[ "$RAM" -ge 8 ]]; then
+    ok "RAM: ${RAM}GB"
+else
+    warn "RAM: ${RAM}GB (8GB+ recommended, will use lightweight model)"
+fi
 
-main "$@"
+echo ""
+
+# Abort if critical prerequisites missing
+if [[ $ERRORS -gt 0 ]]; then
+    fail "Missing $ERRORS required prerequisite(s). Fix the issues above and re-run."
+    exit 1
+fi
+
+echo -e "  ${BOLD}Installing Rocky.AI...${NC}"
+echo ""
+
+# Detect if we're inside the Rocky repo (has pyproject.toml)
+if [[ -f "pyproject.toml" ]] && grep -q "rocky-ai" pyproject.toml 2>/dev/null; then
+    info "Installing from local source..."
+    PIP_CMD=$(command -v pip3 || command -v pip)
+    $PIP_CMD install -e . 2>&1 | tail -3
+else
+    info "Installing from GitHub..."
+    PIP_CMD=$(command -v pip3 || command -v pip)
+    $PIP_CMD install git+https://github.com/RoshanZameerMohammedShaik/Rocky.git 2>&1 | tail -3
+fi
+
+echo ""
+
+# Verify installation
+if command_exists Rocky; then
+    ok "Rocky installed successfully!"
+else
+    # Check if it's in local pip bin
+    ROCKY_PATH=$(python3 -c "import site; print(site.getusersitepackages().replace('lib/python','bin/Rocky'))" 2>/dev/null || echo "")
+    if [[ -f "$ROCKY_PATH" ]]; then
+        ok "Rocky installed (you may need to add ~/.local/bin to PATH)"
+    else
+        warn "Rocky installed but not in PATH. Try: python3 -m rocky.cli"
+    fi
+fi
+
+echo ""
+echo -e "  ${DIM}\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80${NC}"
+echo ""
+echo -e "  ${GREEN}${BOLD}Installation complete!${NC}"
+echo ""
+echo -e "  To start Rocky, just type:"
+echo -e "    ${BOLD}Rocky${NC}"
+echo ""
+echo -e "  ${DIM}First run downloads the AI model (~2.2GB). After that, fully offline.${NC}"
+echo ""

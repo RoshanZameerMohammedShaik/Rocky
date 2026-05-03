@@ -7,19 +7,27 @@ from rocky.llm.models import ModelManager
 from rocky.llm.prompts import SYSTEM_PROMPT
 from rocky.session.memory import ConversationMemory
 from rocky.tools.base import ToolResult, get_tool_registry
-from rocky.tools.files import ReadFileTool, WriteFileTool, EditFileTool, ListDirectoryTool, SearchFilesTool
+from rocky.tools.files import (
+    ReadFileTool, WriteFileTool, EditFileTool,
+    ListDirectoryTool, SearchFilesTool,
+)
 from rocky.tools.shell import RunCommandTool
 from rocky.tools.web import WebSearchTool, WebFetchTool
 from rocky.tools.media import DescribeImageTool, TranscribeAudioTool, ProcessVideoTool
 from rocky.tools.git import GitStatusTool, GitDiffTool, GitLogTool, GitCommitTool
 from rocky.tools.knowledge import IndexFilesTool, SearchKnowledgeTool
-from rocky.ui.animations import ICONS
-from rocky.ui.diff import show_file_change
+from rocky.ui.animations import (
+    ICONS, show_write_lines, show_edit_diff, show_read_shimmer,
+)
 from rocky.utils.logging import get_logger
 from rocky.config import get_config
-from pathlib import Path
 
 logger = get_logger(__name__)
+
+# Tool names for special visual handling
+FILE_WRITE_TOOLS = {"write_file"}
+FILE_EDIT_TOOLS = {"edit_file"}
+FILE_READ_TOOLS = {"read_file"}
 
 
 class Agent:
@@ -32,74 +40,48 @@ class Agent:
         self.model_manager = ModelManager(self.engine, console)
         self.memory = ConversationMemory()
         self.memory.set_system_prompt(SYSTEM_PROMPT)
-
-        # Register tools
         self._register_tools()
 
     def _register_tools(self):
         """Register all available tools."""
         registry = get_tool_registry()
-
         tools = [
-            # File operations
-            ReadFileTool(),
-            WriteFileTool(),
-            EditFileTool(),
-            ListDirectoryTool(),
-            SearchFilesTool(),
-            # Shell
+            ReadFileTool(), WriteFileTool(), EditFileTool(),
+            ListDirectoryTool(), SearchFilesTool(),
             RunCommandTool(self.console),
-            # Web
-            WebSearchTool(),
-            WebFetchTool(),
-            # Media
-            DescribeImageTool(),
-            TranscribeAudioTool(),
-            ProcessVideoTool(),
-            # Git
-            GitStatusTool(),
-            GitDiffTool(),
-            GitLogTool(),
+            WebSearchTool(), WebFetchTool(),
+            DescribeImageTool(), TranscribeAudioTool(), ProcessVideoTool(),
+            GitStatusTool(), GitDiffTool(), GitLogTool(),
             GitCommitTool(self.console),
-            # Knowledge
-            IndexFilesTool(),
-            SearchKnowledgeTool(),
+            IndexFilesTool(), SearchKnowledgeTool(),
         ]
-
         for tool in tools:
             registry.register(tool)
 
     def initialize(self) -> bool:
-        """Initialize the agent — download and load the model."""
+        """Initialize the agent - download and load the model."""
         try:
-            # Check if llama-cpp-python is installed
             import llama_cpp  # noqa: F401
         except ImportError:
             self.console.print("[red]Error: llama-cpp-python not installed.[/red]")
-            self.console.print("Install with: [bold]pip install llama-cpp-python[/bold]")
+            self.console.print(
+                "Install with: [bold]pip install llama-cpp-python[/bold]"
+            )
             return False
 
-        # Ensure text model is available (downloads if needed)
         if not self.model_manager.ensure_model("text"):
             self.console.print("[red]Error: Failed to load model.[/red]")
             return False
-
         return True
 
     def process_message(self, user_input: str) -> Generator[str, None, None]:
         """Process a user message and yield response chunks."""
-
-        # Add to memory
         self.memory.add_user_message(user_input)
-
-        # Get messages for LLM
         messages = self.memory.get_messages()
 
-        # Get tool schemas
         registry = get_tool_registry()
         tools = registry.get_schemas()
 
-        # Stream response from LLM
         full_response = ""
         tool_calls = []
 
@@ -113,53 +95,84 @@ class Agent:
             if response.content:
                 full_response += response.content
                 yield response.content
-
             if response.tool_calls:
                 tool_calls.extend(response.tool_calls)
 
-        # Handle tool calls
+        # Handle tool calls with visual feedback
         if tool_calls:
             for tc in tool_calls:
-                yield f"\n\n{ICONS['processing']} Using tool: {tc.name}...\n"
+                yield "\n"
+                self.console.print(
+                    f"  {ICONS['processing']} [bold]Using:[/bold] {tc.name}"
+                )
 
                 result = self._execute_tool(tc.name, tc.arguments)
+                self._show_tool_result(tc.name, tc.arguments, result)
+                self.memory.add_tool_result(
+                    tc.name, result.output or result.error or ""
+                )
 
-                if result.success:
-                    yield f"{ICONS['success']} {result.output[:500]}\n"
-
-                    # Show diff for file operations
-                    if result.data and "old_content" in result.data and "new_content" in result.data:
-                        show_file_change(
-                            self.console,
-                            Path(result.data.get("path", "file")),
-                            result.data["old_content"],
-                            result.data["new_content"],
-                            result.data.get("action", "modified")
-                        )
-                else:
-                    yield f"{ICONS['error']} Error: {result.error}\n"
-
-                # Add tool result to memory
-                self.memory.add_tool_result(tc.name, result.output or result.error or "")
-
-                # Get follow-up response after tool use
+                # Get follow-up response
                 yield from self._get_followup_response(tc.name, result)
 
-        # Add assistant response to memory
         self.memory.add_assistant_message(full_response, tool_calls=[
             {"name": tc.name, "arguments": tc.arguments} for tc in tool_calls
         ])
 
-    def _get_followup_response(self, tool_name: str, result: ToolResult) -> Generator[str, None, None]:
+    def _show_tool_result(self, name: str, args: dict, result: ToolResult):
+        """Show tool results with appropriate visual animation."""
+        if not result.success:
+            self.console.print(
+                f"  {ICONS['error']} [red]{result.error}[/red]"
+            )
+            return
+
+        filepath = args.get("path", "file")
+
+        # File write: green +lines
+        if name in FILE_WRITE_TOOLS:
+            content = args.get("content", "")
+            if content:
+                show_write_lines(self.console, filepath, content)
+            else:
+                self.console.print(
+                    f"  {ICONS['success']} [green]{result.output}[/green]"
+                )
+
+        # File edit: red -lines then green +lines
+        elif name in FILE_EDIT_TOOLS:
+            old_str = args.get("old_str", "")
+            new_str = args.get("new_str", "")
+            show_edit_diff(self.console, filepath, old_str, new_str)
+
+        # File read: shimmer animation
+        elif name in FILE_READ_TOOLS:
+            content = result.output or ""
+            if content and len(content) > 0:
+                show_read_shimmer(self.console, filepath, content)
+            else:
+                self.console.print(
+                    f"  {ICONS['success']} {result.output[:300]}"
+                )
+
+        # Other tools: plain output
+        else:
+            output = result.output[:500] if result.output else ""
+            if output:
+                self.console.print(
+                    f"  {ICONS['success']} [green]{output}[/green]"
+                )
+
+    def _get_followup_response(
+        self, tool_name: str, result: ToolResult
+    ) -> Generator[str, None, None]:
         """Get a follow-up response after tool execution."""
-        # Add tool result as a message and get model's interpretation
         followup_messages = self.memory.get_messages()
         followup_messages.append(ChatMessage(
             role="tool",
             content=f"Tool '{tool_name}' result: {result.output or result.error}",
             tool_call_id=f"result_{tool_name}",
         ))
-
         yield "\n"
         for response in self.engine.chat(
             followup_messages,
@@ -174,10 +187,8 @@ class Agent:
         """Execute a tool by name."""
         registry = get_tool_registry()
         tool = registry.get(name)
-
         if not tool:
             return ToolResult.fail(f"Unknown tool: {name}")
-
         try:
             return tool.execute(**arguments)
         except Exception as e:
@@ -190,11 +201,9 @@ class Agent:
         self.memory.set_system_prompt(SYSTEM_PROMPT)
 
     def get_memory(self) -> ConversationMemory:
-        """Get the conversation memory."""
         return self.memory
 
     def set_memory(self, memory: ConversationMemory):
-        """Set the conversation memory."""
         self.memory = memory
         if not self.memory.system_prompt:
             self.memory.set_system_prompt(SYSTEM_PROMPT)

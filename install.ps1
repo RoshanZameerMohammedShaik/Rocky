@@ -1,86 +1,128 @@
-# Rocky.AI Installation Script for Windows
-# Installs Rocky.AI with embedded local LLM — no Ollama, no external apps
+# Rocky.AI Installer for Windows
+# Checks prerequisites, installs everything needed.
+# Usage: .\install.ps1
+# After install: Rocky
 
 $ErrorActionPreference = "Stop"
 
-Write-Host @"
+function Write-Ok($msg)   { Write-Host "  [OK] $msg" -ForegroundColor Green }
+function Write-Warn($msg) { Write-Host "  [!]  $msg" -ForegroundColor Yellow }
+function Write-Fail($msg) { Write-Host "  [X]  $msg" -ForegroundColor Red }
+function Write-Info($msg) { Write-Host "  [i]  $msg" -ForegroundColor Cyan }
 
-██████╗  ██████╗  ██████╗██╗  ██╗██╗   ██╗     █████╗ ██╗
-██╔══██╗██╔═══██╗██╔════╝██║ ██╔╝╚██╗ ██╔╝    ██╔══██╗██║
-██████╔╝██║   ██║██║     █████╔╝  ╚████╔╝     ███████║██║
-██╔══██╗██║   ██║██║     ██╔═██╗   ╚██╔╝      ██╔══██║██║
-██║  ██║╚██████╔╝╚██████╗██║  ██╗   ██║    ██╗██║  ██║██║
-╚═╝  ╚═╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝   ╚═╝    ╚═╝╚═╝  ╚═╝╚═╝
-
-"@ -ForegroundColor Cyan
-
-Write-Host "Rocky.AI Installer — Fully local AI, zero external apps" -ForegroundColor White
+Write-Host ""
+Write-Host "  Rocky.AI Installer" -ForegroundColor Cyan
+Write-Host "  Fully local AI - Zero external apps - One command to run" -ForegroundColor DarkGray
 Write-Host ""
 
-# Detect RAM
 $RAM = [math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1GB)
+$errors = 0
 
-Write-Host "Detecting system..."
-Write-Host "  OS: Windows"
-Write-Host "  RAM: ${RAM}GB"
+Write-Host "  Checking prerequisites..." -ForegroundColor White
 Write-Host ""
 
-if ($RAM -lt 8) {
-    Write-Host "Rocky.AI works best with 8GB+ RAM. You have ${RAM}GB." -ForegroundColor Yellow
-    Write-Host "Will use the lightweight 1.7B model for your system." -ForegroundColor Cyan
-    Write-Host ""
+# 1) Python 3.10+
+try {
+    $pyVer = python --version 2>&1
+    if ($pyVer -match "(\d+)\.(\d+)") {
+        $major = [int]$Matches[1]
+        $minor = [int]$Matches[2]
+        if ($major -ge 3 -and $minor -ge 10) {
+            Write-Ok "Python $pyVer"
+        } else {
+            Write-Fail "Python $pyVer found, need 3.10+"
+            $errors++
+        }
+    }
+} catch {
+    Write-Fail "Python not found. Install from https://python.org"
+    $errors++
 }
 
-Write-Host "==========================================================="
-Write-Host "Installation Steps"
-Write-Host "==========================================================="
+# 2) pip
+try {
+    pip --version | Out-Null
+    Write-Ok "pip"
+} catch {
+    Write-Fail "pip not found. Run: python -m ensurepip"
+    $errors++
+}
+
+# 3) C compiler
+$hasCompiler = $false
+foreach ($comp in @("cl", "gcc", "clang")) {
+    if (Get-Command $comp -ErrorAction SilentlyContinue) {
+        Write-Ok "C compiler ($comp)"
+        $hasCompiler = $true
+        break
+    }
+}
+if (-not $hasCompiler) {
+    Write-Warn "No C compiler found. Install Visual Studio Build Tools"
+    Write-Info "  https://visualstudio.microsoft.com/visual-cpp-build-tools/"
+    Write-Info "  Select 'Desktop development with C++'"
+    $errors++
+}
+
+# 4) git
+if (Get-Command git -ErrorAction SilentlyContinue) {
+    Write-Ok "git"
+} else {
+    Write-Warn "git not found (optional)"
+}
+
+# 5) FFmpeg
+if (Get-Command ffmpeg -ErrorAction SilentlyContinue) {
+    Write-Ok "FFmpeg"
+} else {
+    Write-Warn "FFmpeg not found (optional, for video/audio)"
+    Write-Info "Install: winget install ffmpeg"
+}
+
+# 6) RAM
+if ($RAM -ge 8) {
+    Write-Ok "RAM: ${RAM}GB"
+} else {
+    Write-Warn "RAM: ${RAM}GB (8GB+ recommended)"
+}
+
 Write-Host ""
 
-# Step 1: Python
-Write-Host "[1/3] Checking Python..." -ForegroundColor White
-try {
-    $pythonVersion = python --version 2>&1
-    Write-Host "  $pythonVersion found" -ForegroundColor Green
-} catch {
-    Write-Host "  Python not found." -ForegroundColor Red
-    Write-Host "  Please install Python 3.10+ from python.org" -ForegroundColor Red
+if ($errors -gt 0) {
+    Write-Fail "Missing $errors required prerequisite(s). Fix and re-run."
     exit 1
 }
 
-# Step 2: FFmpeg (optional)
+Write-Host "  Installing Rocky.AI..." -ForegroundColor White
 Write-Host ""
-Write-Host "[2/3] Checking FFmpeg (optional)..." -ForegroundColor White
-$ffmpegPath = Get-Command ffmpeg -ErrorAction SilentlyContinue
-if ($ffmpegPath) {
-    Write-Host "  FFmpeg found — video/audio processing available" -ForegroundColor Green
+
+if (Test-Path "pyproject.toml") {
+    $content = Get-Content "pyproject.toml" -Raw
+    if ($content -match "rocky-ai") {
+        Write-Info "Installing from local source..."
+        pip install -e .
+    } else {
+        Write-Info "Installing from GitHub..."
+        pip install git+https://github.com/RoshanZameerMohammedShaik/Rocky.git
+    }
 } else {
-    Write-Host "  FFmpeg not found. Video processing will be limited." -ForegroundColor Yellow
-    Write-Host "  Install with: winget install ffmpeg" -ForegroundColor Yellow
+    Write-Info "Installing from GitHub..."
+    pip install git+https://github.com/RoshanZameerMohammedShaik/Rocky.git
 }
 
-# Step 3: Rocky.AI
-Write-Host ""
-Write-Host "[3/3] Installing Rocky.AI..." -ForegroundColor White
-Write-Host "  This installs Rocky.AI with its embedded AI engine." -ForegroundColor Cyan
-Write-Host "  No external AI applications will be installed." -ForegroundColor Cyan
 Write-Host ""
 
-try {
-    pip install rocky-ai 2>$null
-} catch {
-    pip install llama-cpp-python httpx rich prompt-toolkit pyyaml beautifulsoup4
+if (Get-Command Rocky -ErrorAction SilentlyContinue) {
+    Write-Ok "Rocky installed successfully!"
+} else {
+    Write-Warn "Rocky installed. You may need to restart your terminal."
 }
-Write-Host "  Rocky.AI installed" -ForegroundColor Green
 
-# Done
 Write-Host ""
-Write-Host "==========================================================="
-Write-Host "Installation Complete!" -ForegroundColor Green
-Write-Host "==========================================================="
+Write-Host "  Installation complete!" -ForegroundColor Green
 Write-Host ""
-Write-Host "To start Rocky.AI, run:"
-Write-Host "  Rocky" -ForegroundColor White
+Write-Host "  To start Rocky, just type:"
+Write-Host "    Rocky" -ForegroundColor White
 Write-Host ""
-Write-Host "On first run, Rocky.AI will download its AI model (~3GB)."
-Write-Host "Everything runs locally — no cloud, no external apps."
+Write-Host "  First run downloads the AI model (~2.2GB)." -ForegroundColor DarkGray
 Write-Host ""

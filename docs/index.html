@@ -1103,6 +1103,8 @@
                 <span class="prompt">$ </span><span class="cmd">pip install .</span><br><br>
                 <span class="comment"># Windows/Linux with NVIDIA GPU &mdash; for CUDA acceleration</span><br>
                 <span class="prompt">$ </span><span class="cmd">CMAKE_ARGS="-DGGML_CUDA=on" pip install .</span><br><br>
+                <span class="comment"># Or use the installer (checks prerequisites automatically)</span><br>
+                <span class="prompt">$ </span><span class="cmd">./install.sh</span><br><br>
                 <span class="comment"># All platforms: Python 3.10+ required</span>
             </div>
         </div>
@@ -1412,20 +1414,23 @@
     }
 
     function runTerminalAnimation() {
-        // Step 1: pip install rocky-ai
+        // Step 1: ./install.sh
         const line1 = addLine('<span class="prompt-char">$ </span><span class="typed"></span>');
         const typed1 = line1.querySelector('.typed');
-        typeText(typed1, 'pip install rocky-ai', TYPING_SPEED, () => {
+        typeText(typed1, './install.sh', TYPING_SPEED, () => {
             setTimeout(() => {
-                addLine('<span class="output">Collecting rocky-ai</span>');
+                addLine('<span class="output">  \u2714 Python 3.12</span>');
                 setTimeout(() => {
-                    addLine('<span class="output">Installing collected packages: rocky-ai</span>');
+                    addLine('<span class="output">  \u2714 pip</span>');
                     setTimeout(() => {
-                        addLine('<span class="output" style="color: var(--green);">Successfully installed rocky-ai-0.2.0</span>');
-                        addBlank();
-                        setTimeout(step2, STEP_DELAY);
-                    }, 200);
-                }, 200);
+                        addLine('<span class="output">  \u2714 C compiler (clang)</span>');
+                        setTimeout(() => {
+                            addLine('<span class="output" style="color: var(--green);">  \u2714 Rocky installed successfully!</span>');
+                            addBlank();
+                            setTimeout(step2, STEP_DELAY);
+                        }, 150);
+                    }, 150);
+                }, 150);
             }, LINE_DELAY);
         });
     }
