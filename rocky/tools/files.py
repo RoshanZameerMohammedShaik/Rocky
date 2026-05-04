@@ -1,8 +1,6 @@
 """File operation tools for Rocky.Ai."""
 
-import os
 import re
-import glob as glob_module
 from pathlib import Path
 from typing import Optional
 from rocky.tools.base import Tool, ToolResult, ToolParameter
@@ -125,7 +123,7 @@ class WriteFileTool(Tool):
 
 class EditFileTool(Tool):
     """Edit a file using find and replace."""
-    
+
     def __init__(self):
         super().__init__(
             name="edit_file",
@@ -149,34 +147,47 @@ class EditFileTool(Tool):
                     description="Replacement string",
                     required=True
                 ),
+                ToolParameter(
+                    name="replace_all",
+                    type="boolean",
+                    description="Replace all occurrences of old_str (default: false, fails if multiple matches)",
+                    required=False,
+                    default=False
+                ),
             ]
         )
     
-    def execute(self, path: str, old_str: str, new_str: str) -> ToolResult:
+    def execute(self, path: str, old_str: str, new_str: str, replace_all: bool = False) -> ToolResult:
         try:
             file_path = Path(path).expanduser().resolve()
-            
+
             if not file_path.exists():
                 return ToolResult.fail(f"File not found: {path}")
-            
+
             content = file_path.read_text(encoding="utf-8")
             old_content = content
-            
+
             # Check if old_str exists
             if old_str not in content:
                 return ToolResult.fail(f"String not found in file: {old_str[:50]}...")
-            
+
             # Count occurrences
             count = content.count(old_str)
-            if count > 1:
+
+            # Handle replace_all logic
+            if not replace_all and count > 1:
                 return ToolResult.fail(
-                    f"String found {count} times. Please provide more context to make it unique."
+                    f"String found {count} times. Use replace_all=true or provide more context."
                 )
-            
+
             # Perform replacement
-            new_content = content.replace(old_str, new_str, 1)
+            if replace_all:
+                new_content = content.replace(old_str, new_str)
+            else:
+                new_content = content.replace(old_str, new_str, 1)
+
             file_path.write_text(new_content, encoding="utf-8")
-            
+
             return ToolResult.ok(
                 f"Edited file: {path}",
                 data={
@@ -185,7 +196,7 @@ class EditFileTool(Tool):
                     "new_content": new_content
                 }
             )
-            
+
         except PermissionError:
             return ToolResult.fail(f"Permission denied: {path}")
         except Exception as e:
@@ -355,3 +366,130 @@ class SearchFilesTool(Tool):
             return ToolResult.fail(f"Invalid regex pattern: {e}")
         except Exception as e:
             return ToolResult.fail(f"Error searching files: {e}")
+
+
+class GlobFilesTool(Tool):
+    """Find files matching a glob pattern."""
+
+    def __init__(self):
+        super().__init__(
+            name="glob_files",
+            description="Find files matching a glob pattern (e.g., '**/*.py', 'src/*.ts')",
+            parameters=[
+                ToolParameter(
+                    name="pattern",
+                    type="string",
+                    description="Glob pattern to match",
+                    required=True
+                ),
+                ToolParameter(
+                    name="path",
+                    type="string",
+                    description="Directory to search in",
+                    required=False,
+                    default="."
+                ),
+            ]
+        )
+
+    def execute(self, pattern: str, path: str = ".") -> ToolResult:
+        try:
+            dir_path = Path(path).expanduser().resolve()
+            if not dir_path.exists():
+                return ToolResult.fail(f"Directory not found: {path}")
+
+            matches = sorted(dir_path.glob(pattern))
+            files = [str(m.relative_to(dir_path)) for m in matches if m.is_file()]
+
+            output = "\n".join(files[:200])
+            if len(files) > 200:
+                output += f"\n... and {len(files) - 200} more"
+
+            if not files:
+                output = "No files matched."
+
+            return ToolResult.ok(output, data={"count": len(files), "path": str(dir_path)})
+        except Exception as e:
+            return ToolResult.fail(f"Glob error: {e}")
+
+
+class SummarizeFileTool(Tool):
+    """Get structural summary of a file without reading full content."""
+
+    def __init__(self):
+        super().__init__(
+            name="summarize_file",
+            description="Get a structural summary (classes, functions, imports) without full content",
+            parameters=[
+                ToolParameter(
+                    name="path",
+                    type="string",
+                    description="Path to the file",
+                    required=True
+                ),
+            ]
+        )
+
+    def execute(self, path: str) -> ToolResult:
+        try:
+            file_path = Path(path).expanduser().resolve()
+
+            if not file_path.exists():
+                return ToolResult.fail(f"File not found: {path}")
+
+            content = file_path.read_text(encoding="utf-8", errors="replace")
+            lines = content.splitlines()
+            total_lines = len(lines)
+
+            imports = []
+            classes = []
+            functions = []
+            current_class = None
+
+            for i, line in enumerate(lines, 1):
+                stripped = line.strip()
+
+                if stripped.startswith(("import ", "from ")):
+                    mod = stripped.split()[1] if len(stripped.split()) > 1 else ""
+                    if mod and mod not in imports:
+                        imports.append(mod)
+
+                elif stripped.startswith("class "):
+                    match = re.match(r"class\s+(\w+)", stripped)
+                    if match:
+                        current_class = {"name": match.group(1), "line": i, "methods": []}
+                        classes.append(current_class)
+
+                elif stripped.startswith("def "):
+                    match = re.match(r"def\s+(\w+)", stripped)
+                    if match:
+                        func_name = match.group(1)
+                        if current_class and line.startswith("    "):
+                            current_class["methods"].append(func_name)
+                        else:
+                            functions.append({"name": func_name, "line": i})
+                            current_class = None
+
+                elif stripped and not line.startswith((" ", "\t")) and not stripped.startswith(("#", "@")):
+                    current_class = None
+
+            parts = [f"{file_path.name} ({total_lines} lines)"]
+
+            if imports:
+                parts.append(f"  Imports: {', '.join(imports[:15])}")
+
+            if classes:
+                parts.append("  Classes:")
+                for cls in classes:
+                    methods = ", ".join(cls["methods"][:8])
+                    suffix = f": {methods}" if methods else ""
+                    parts.append(f"    - {cls['name']} (line {cls['line']}){suffix}")
+
+            if functions:
+                parts.append("  Functions:")
+                for fn in functions[:15]:
+                    parts.append(f"    - {fn['name']} (line {fn['line']})")
+
+            return ToolResult.ok("\n".join(parts), data={"path": str(file_path), "lines": total_lines})
+        except Exception as e:
+            return ToolResult.fail(f"Error summarizing file: {e}")
