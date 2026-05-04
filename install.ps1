@@ -118,6 +118,12 @@ if (Get-Command Rocky -ErrorAction SilentlyContinue) {
     Write-Warn "Rocky installed. You may need to restart your terminal."
 }
 
+# Download AI model based on system hardware
+Write-Host ""
+Write-Host "  Detecting hardware and downloading AI model..." -ForegroundColor White
+Write-Host ""
+python -m rocky.setup_model
+
 Write-Host ""
 Write-Host "  Installation complete!" -ForegroundColor Green
 Write-Host ""

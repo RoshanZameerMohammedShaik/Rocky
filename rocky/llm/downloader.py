@@ -46,36 +46,111 @@ class DownloadProgress:
         return (self.downloaded / self.total) * 100
 
 
-# Default model registry — curated for Rocky.Ai
+# 10 models across the full hardware spectrum — curated for Rocky.Ai
 MODEL_REGISTRY: dict[str, ModelInfo] = {
+    # --- Tier 1: Ultra-light (2-4GB RAM) ---
+    "qwen2.5-0.5b-q4": ModelInfo(
+        name="Qwen2.5-0.5B Tiny",
+        repo_id="Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+        filename="qwen2.5-0.5b-instruct-q4_k_m.gguf",
+        size_bytes=400_000_000,
+        description="Minimum viable — fast on any hardware",
+        quantization="Q4_K_M",
+        parameters="0.5B",
+        purpose="text",
+    ),
+    "qwen2.5-0.5b": ModelInfo(
+        name="Qwen2.5-0.5B",
+        repo_id="Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+        filename="qwen2.5-0.5b-instruct-q8_0.gguf",
+        size_bytes=530_000_000,
+        description="Ultra-light, best quality at 0.5B",
+        quantization="Q8_0",
+        parameters="0.5B",
+        purpose="text",
+    ),
+    # --- Tier 2: Light (4-8GB RAM) ---
+    "qwen2.5-1.5b-q4": ModelInfo(
+        name="Qwen2.5-1.5B Fast",
+        repo_id="Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        filename="qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        size_bytes=1_000_000_000,
+        description="Good balance for 4-6GB systems",
+        quantization="Q4_K_M",
+        parameters="1.5B",
+        purpose="text",
+    ),
+    "qwen2.5-1.5b": ModelInfo(
+        name="Qwen2.5-1.5B",
+        repo_id="Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        filename="qwen2.5-1.5b-instruct-q8_0.gguf",
+        size_bytes=1_600_000_000,
+        description="Best quality at 1.5B — sweet spot for 8GB no-GPU",
+        quantization="Q8_0",
+        parameters="1.5B",
+        purpose="text",
+    ),
+    # --- Tier 3: Medium (8-12GB RAM) ---
+    "qwen2.5-3b-q4": ModelInfo(
+        name="Qwen2.5-3B Fast",
+        repo_id="Qwen/Qwen2.5-3B-Instruct-GGUF",
+        filename="qwen2.5-3b-instruct-q4_k_m.gguf",
+        size_bytes=1_800_000_000,
+        description="Strong general model, compressed for speed",
+        quantization="Q4_K_M",
+        parameters="3B",
+        purpose="text",
+    ),
     "qwen2.5-3b": ModelInfo(
-        name="Qwen2.5-3B-Instruct",
+        name="Qwen2.5-3B",
         repo_id="Qwen/Qwen2.5-3B-Instruct-GGUF",
         filename="qwen2.5-3b-instruct-q5_k_m.gguf",
-        size_bytes=2_360_000_000,  # ~2.2GB
-        description="Great balance of speed and quality with tool calling",
+        size_bytes=2_360_000_000,
+        description="Best balance of speed and quality — default for GPU systems",
         quantization="Q5_K_M",
         parameters="3B",
         purpose="text",
     ),
+    # --- Tier 4: High (12-16GB RAM, GPU recommended) ---
+    "qwen2.5-7b-q2": ModelInfo(
+        name="Qwen2.5-7B Compact",
+        repo_id="Qwen/Qwen2.5-7B-Instruct-GGUF",
+        filename="qwen2.5-7b-instruct-q2_k.gguf",
+        size_bytes=2_800_000_000,
+        description="7B intelligence in a compact package",
+        quantization="Q2_K",
+        parameters="7B",
+        purpose="text",
+    ),
     "qwen2.5-7b": ModelInfo(
-        name="Qwen2.5-7B-Instruct",
+        name="Qwen2.5-7B",
         repo_id="Qwen/Qwen2.5-7B-Instruct-GGUF",
         filename="qwen2.5-7b-instruct-q3_k_m.gguf",
-        size_bytes=3_800_000_000,  # ~3.5GB
-        description="Higher quality model, needs 12GB+ RAM",
+        size_bytes=3_800_000_000,
+        description="High quality general assistant",
         quantization="Q3_K_M",
         parameters="7B",
         purpose="text",
     ),
-    "qwen2.5-0.5b": ModelInfo(
-        name="Qwen2.5-0.5B-Instruct",
-        repo_id="Qwen/Qwen2.5-0.5B-Instruct-GGUF",
-        filename="qwen2.5-0.5b-instruct-q8_0.gguf",
-        size_bytes=530_000_000,  # ~530MB
-        description="Ultra-light model for low-RAM systems",
+    # --- Tier 5: Premium (16GB+ RAM, GPU required) ---
+    "qwen2.5-coder-7b": ModelInfo(
+        name="Qwen2.5-Coder-7B",
+        repo_id="Qwen/Qwen2.5-Coder-7B-Instruct-GGUF",
+        filename="qwen2.5-coder-7b-instruct-q4_k_m.gguf",
+        size_bytes=4_200_000_000,
+        description="Coding specialist — best for developers with GPU",
+        quantization="Q4_K_M",
+        parameters="7B",
+        purpose="text",
+    ),
+    "qwen2.5-coder-7b-q8": ModelInfo(
+        name="Qwen2.5-Coder-7B HQ",
+        repo_id="Qwen/Qwen2.5-Coder-7B-Instruct-GGUF",
+        filename="qwen2.5-coder-7b-instruct-q8_0.gguf",
+        size_bytes=7_700_000_000,
+        description="Maximum coding quality — 16GB+ RAM with GPU",
         quantization="Q8_0",
-        parameters="0.5B",
+        parameters="7B",
         purpose="text",
     ),
 }
@@ -304,22 +379,55 @@ class ModelDownloader:
         return False
 
     def get_recommended_model(self) -> str:
-        """Get the recommended model key based on system resources and GPU."""
-        from rocky.utils.platform import get_memory_gb, has_gpu
+        """Get the best model for this machine's hardware.
+
+        Detects RAM, GPU, and CPU to pick the optimal model
+        from the 10-model registry.
+        """
+        from rocky.utils.platform import get_memory_gb, has_gpu, get_cpu_count
 
         ram_gb = get_memory_gb()
         gpu = has_gpu()
+        cpus = get_cpu_count()
 
         if gpu:
-            # GPU available — use larger models, they'll be fast
-            if ram_gb >= 12:
-                return "qwen2.5-7b"
-            return "qwen2.5-3b"
-        else:
-            # CPU only — use smaller model for acceptable speed
             if ram_gb >= 16:
-                return "qwen2.5-3b"
-            return "qwen2.5-0.5b"
+                return "qwen2.5-coder-7b"    # 4.2GB, best for devs
+            elif ram_gb >= 12:
+                return "qwen2.5-7b"           # 3.5GB, high quality
+            elif ram_gb >= 8:
+                return "qwen2.5-3b"           # 2.2GB, great balance
+            else:
+                return "qwen2.5-1.5b-q4"      # 1GB, GPU helps
+        else:
+            # CPU only — speed matters more
+            if ram_gb >= 16 and cpus >= 8:
+                return "qwen2.5-3b-q4"        # 1.8GB, compressed
+            elif ram_gb >= 8:
+                return "qwen2.5-1.5b"         # 1.6GB, best at size
+            elif ram_gb >= 4:
+                return "qwen2.5-0.5b"         # 530MB
+            else:
+                return "qwen2.5-0.5b-q4"      # 400MB, absolute min
+
+    def get_system_profile(self) -> dict:
+        """Get a summary of system hardware for display."""
+        from rocky.utils.platform import get_memory_gb, has_gpu, get_cpu_count
+
+        ram = get_memory_gb()
+        gpu = has_gpu()
+        cpus = get_cpu_count()
+        rec = self.get_recommended_model()
+        model = MODEL_REGISTRY.get(rec)
+
+        return {
+            "ram_gb": round(ram),
+            "gpu": gpu,
+            "cpu_cores": cpus,
+            "recommended_model": rec,
+            "model_name": model.name if model else rec,
+            "model_size": format_size(model.size_bytes) if model else "?",
+        }
 
 
 def format_size(size_bytes: int) -> str:
