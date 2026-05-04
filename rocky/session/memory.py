@@ -56,6 +56,14 @@ class ConversationMemory:
                 "result": result
             })
 
+    def add_mid_task_instruction(self, instruction: str):
+        """Add a /btw mid-task instruction from the user."""
+        self.turns.append(ConversationTurn(
+            role="user",
+            content=f"[Mid-task instruction]: {instruction}"
+        ))
+        self._trim_if_needed()
+
     def get_messages(self) -> list[ChatMessage]:
         """Get messages in format for LLM."""
         messages = []
