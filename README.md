@@ -11,14 +11,32 @@ A fully local, open-source agentic AI CLI tool that runs entirely on your machin
 
 ## Features
 
-- Local LLM (Qwen2.5) — embedded via llama-cpp-python, no separate app
-- File operations with glob patterns
-- Shell command execution with permissions
-- Web search (offline-first, online when needed)
-- Audio transcription (Whisper, optional)
-- Knowledge base (semantic search)
-- Beautiful terminal UI
-- GPU acceleration (CUDA, Metal, Vulkan — auto-detected)
+### Core Engine
+- **Local LLM (Qwen2.5)** — embedded via llama-cpp-python, no separate app required
+- **Agentic multi-step reasoning** — Rocky loops until your task is complete, breaking down complex requests into sub-tasks
+- **User persona learning** — learns your preferences, coding style, and project decisions across sessions
+- **Dynamic context awareness** — auto-refreshes environment info (cwd, git state, timestamp) every turn
+
+### File & Command Operations
+- **File operations** — read, write, edit, search, list, glob patterns, and file summarization
+- **Shell command execution** — with tiered permission system (Allow/Deny/Trust/eXit)
+- **Background job execution** — run commands in background with job tracking and output capture
+- **Dangerous command detection** — automatic flagging of destructive operations
+
+### Intelligence Features
+- **Web search** — DuckDuckGo search and page fetching (offline-first, online when needed)
+- **Knowledge base** — semantic search over your indexed codebase
+- **Audio transcription** — Whisper integration (optional install, works offline)
+- **Git integration** — status, diff, log, and commit operations
+
+### User Experience
+- **Rich markdown streaming** — syntax-highlighted code blocks, tables, and formatted text rendered in real-time
+- **Arrow-key menus** — intuitive navigation for quit confirmations and permission prompts
+- **Session management** — save and resume conversations exactly where you left off
+- **/btw mid-task steering** — inject instructions mid-task to change direction or add constraints
+- **/refresh memory checkpoints** — persist persona and learnings to disk
+- **Beautiful terminal UI** — with braille art banner and minimalistic animations
+- **GPU acceleration** — CUDA, Metal, Vulkan auto-detected and used automatically
 
 ## Requirements
 

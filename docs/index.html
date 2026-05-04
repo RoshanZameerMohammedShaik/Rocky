@@ -966,14 +966,29 @@
                 <p>Runs Qwen2.5 models via llama.cpp directly in-process. No Ollama, no LM Studio, no background service eating your RAM.</p>
             </div>
             <div class="feature-card">
+                <span class="feature-icon">&#x1F504;</span>
+                <h3>Agentic Multi-Step Reasoning</h3>
+                <p>Rocky loops until your task is complete — breaking down complex requests into sub-tasks, executing them, and validating results autonomously.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">&#x1F9D1;</span>
+                <h3>User Persona Learning</h3>
+                <p>Learns your preferences, coding style, and project decisions across sessions. Type /refresh to save memory checkpoints.</p>
+            </div>
+            <div class="feature-card">
                 <span class="feature-icon">&#x1F4C1;</span>
                 <h3>File Operations</h3>
-                <p>Read, write, edit, search, and list files. Rocky handles CRUD with diff previews and safety checks.</p>
+                <p>Read, write, edit, search, and list files. Rocky handles CRUD with diff previews and safety checks. New: glob patterns and file summarization.</p>
             </div>
             <div class="feature-card">
                 <span class="feature-icon">&#x1F4BB;</span>
                 <h3>Shell Commands</h3>
-                <p>Execute terminal commands with a permission system. Dangerous commands are flagged before execution.</p>
+                <p>Execute terminal commands with tiered permission system. Run commands in background with job tracking and output capture.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">&#x1F6E1;</span>
+                <h3>Tiered Permission System</h3>
+                <p>Allow once, Deny, Trust-for-session, or eXit. Dangerous commands flagged. Use /tools to manage permissions and trust settings.</p>
             </div>
             <div class="feature-card">
                 <span class="feature-icon">&#x1F310;</span>
@@ -991,6 +1006,16 @@
                 <p>Index your files into a searchable knowledge base. Rocky remembers your codebase.</p>
             </div>
             <div class="feature-card">
+                <span class="feature-icon">&#x1F4AC;</span>
+                <h3>/btw Mid-Task Steering</h3>
+                <p>Inject instructions mid-task with /btw — change direction, add constraints, or clarify requirements while Rocky is working.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">&#x1F4CA;</span>
+                <h3>Dynamic Context Awareness</h3>
+                <p>Rocky auto-refreshes environment info (cwd, git state, timestamp) every turn to stay aware of system changes.</p>
+            </div>
+            <div class="feature-card">
                 <span class="feature-icon">&#x26A1;</span>
                 <h3>GPU Auto-Detection</h3>
                 <p>Automatically uses Metal on macOS, CUDA on NVIDIA, Vulkan on AMD. Falls back to CPU gracefully.</p>
@@ -999,6 +1024,16 @@
                 <span class="feature-icon">&#x1F4BE;</span>
                 <h3>Session Management</h3>
                 <p>Save and resume conversations. Pick up exactly where you left off.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">&#x1F3A8;</span>
+                <h3>Rich Markdown Streaming</h3>
+                <p>Rocky renders responses with syntax-highlighted code blocks, tables, and formatted text in real-time as it thinks.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">&#x2328;</span>
+                <h3>Arrow-Key Menus</h3>
+                <p>Quit confirmations and permission prompts use intuitive arrow-key navigation with visual selection indicators.</p>
             </div>
             <div class="feature-card">
                 <span class="feature-icon">&#x1F3A7;</span>
@@ -1158,16 +1193,20 @@
                         <td class="cmd-desc">List all saved sessions</td>
                     </tr>
                     <tr>
-                        <td class="cmd-name">/model</td>
-                        <td class="cmd-desc">Show current model info</td>
+                        <td class="cmd-name">/model [name]</td>
+                        <td class="cmd-desc">Show current model info or switch model</td>
                     </tr>
                     <tr>
-                        <td class="cmd-name">/models</td>
-                        <td class="cmd-desc">List available models with download status</td>
+                        <td class="cmd-name">/tools [action]</td>
+                        <td class="cmd-desc">Manage permissions (list, trust, trust-all, deny, reset)</td>
                     </tr>
                     <tr>
-                        <td class="cmd-name">/trust</td>
-                        <td class="cmd-desc">Enable trust mode &mdash; skip permission prompts for session</td>
+                        <td class="cmd-name">/refresh</td>
+                        <td class="cmd-desc">Save memory checkpoint (persona and learnings)</td>
+                    </tr>
+                    <tr>
+                        <td class="cmd-name">/jobs</td>
+                        <td class="cmd-desc">Show background job status</td>
                     </tr>
                     <tr>
                         <td class="cmd-name">/version</td>
@@ -1192,12 +1231,21 @@
                     <li>edit_file</li>
                     <li>list_directory</li>
                     <li>search_files</li>
+                    <li>glob_files</li>
+                    <li>summarize_file</li>
                 </ul>
             </div>
             <div class="tool-category">
                 <h4>Execution</h4>
                 <ul>
                     <li>run_command</li>
+                    <li>run_command_background</li>
+                </ul>
+            </div>
+            <div class="tool-category">
+                <h4>Planning</h4>
+                <ul>
+                    <li>task_plan</li>
                 </ul>
             </div>
             <div class="tool-category">

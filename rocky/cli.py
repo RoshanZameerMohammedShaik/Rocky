@@ -9,7 +9,8 @@ from rocky import __version__, __app_name__
 from rocky.agent import Agent
 from rocky.agent_runner import AgentRunner
 from rocky.session import SessionManager
-from rocky.ui.splash import show_splash, show_goodbye
+from rocky.ui.splash import show_goodbye
+from rocky.ui.banner import show_banner
 from rocky.ui.input import get_input_handler
 from rocky.ui.permissions import get_permission_manager
 from rocky.ui.animations import ICONS
@@ -63,8 +64,8 @@ class RockyCLI:
         """Main run loop."""
         setup_logging()
 
-        # Show splash screen
-        show_splash(self.console)
+        # Show startup banner
+        show_banner(self.console, __version__)
 
         # Initialize agent
         self.agent = Agent(self.console)
