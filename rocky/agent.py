@@ -1,10 +1,11 @@
 """Main agent for Rocky.Ai."""
 
 from typing import Generator
+from queue import Queue
 from rich.console import Console
-from rocky.llm.engine import LlamaCppEngine, ChatMessage
+from rocky.llm.engine import LlamaCppEngine
 from rocky.llm.models import ModelManager
-from rocky.llm.prompts import SYSTEM_PROMPT
+from rocky.llm.prompts import SYSTEM_PROMPT, build_system_prompt
 from rocky.session.memory import ConversationMemory
 from rocky.tools.base import ToolResult, get_tool_registry
 from rocky.tools.files import (
@@ -21,6 +22,10 @@ from rocky.tools.task_plan import TaskPlanTool
 from rocky.ui.animations import (
     ICONS, show_write_lines, show_edit_diff, show_read_shimmer,
 )
+from rocky.ui.permissions import get_permission_manager, PermissionDecision
+from rocky.ui.stream import StreamRenderer
+from rocky.context import ContextGatherer
+from rocky.persona import PersonaManager
 from rocky.utils.logging import get_logger
 from rocky.config import get_config
 
@@ -42,6 +47,11 @@ class Agent:
         self.model_manager = ModelManager(self.engine, console)
         self.memory = ConversationMemory()
         self.memory.set_system_prompt(SYSTEM_PROMPT)
+        self.context = ContextGatherer()
+        self.persona = PersonaManager()
+        self.stream_renderer = StreamRenderer(console)
+        self.btw_queue: Queue = Queue()
+        self._max_iterations = 100
         self._register_tools()
 
     def _register_tools(self):
@@ -76,80 +86,144 @@ class Agent:
         if not self.model_manager.ensure_model("text"):
             self.console.print("[red]Error: Failed to load model.[/red]")
             return False
+
+        # Gather initial context and learn from environment
+        ctx = self.context.gather()
+        self.persona.passive_learn_from_environment(ctx.working_dir)
+
+        # Build dynamic system prompt
+        system_prompt = build_system_prompt(
+            context_block=ctx.render_for_prompt(),
+            persona_block=self.persona.render_summary()
+        )
+        self.memory.set_system_prompt(system_prompt)
+
         return True
 
     def process_message(self, user_input: str) -> Generator[str, None, None]:
-        """Process a user message and yield response chunks."""
+        """Process a user message with full agentic reasoning loop."""
         self.memory.add_user_message(user_input)
-        messages = self.memory.get_messages()
+
+        # Passive persona learning
+        self.persona.passive_learn_from_message(user_input)
 
         registry = get_tool_registry()
         tools = registry.get_schemas()
+        permission_manager = get_permission_manager()
 
-        full_response = ""
-        tool_calls = []
-        buffer = ""
-        in_tool_call = False
+        iteration = 0
+        consecutive_errors = 0
+        recent_calls: list[tuple[str, str]] = []  # (tool_name, args_hash) for loop detection
 
-        # Stream response — buffer when <tool_call> detected
-        for response in self.engine.chat(
-            messages,
-            tools=tools,
-            temperature=self.config.model.temperature,
-            max_tokens=self.config.model.max_tokens,
-            stream=True,
-        ):
-            if response.tool_calls:
-                tool_calls.extend(response.tool_calls)
+        while iteration < self._max_iterations:
+            iteration += 1
 
-            if response.content:
-                full_response += response.content
-                buffer += response.content
+            # Check for /btw injections
+            while not self.btw_queue.empty():
+                btw_msg = self.btw_queue.get()
+                self.memory.add_mid_task_instruction(btw_msg)
+                self.console.print("  [cyan]⠧ Noted — adjusting...[/cyan]")
 
-                # Check if we're entering a tool call
-                if not in_tool_call and "<tool_call>" in buffer:
-                    # Yield everything before the tag
-                    pre = buffer.split("<tool_call>")[0]
-                    if pre.strip():
-                        yield pre
-                    in_tool_call = True
-                    buffer = ""
-                elif not in_tool_call:
-                    # Stream normally — yield and clear buffer
-                    yield buffer
-                    buffer = ""
-                # If in_tool_call, keep buffering silently
+            # Get LLM response
+            messages = self.memory.get_messages()
+            full_response = ""
+            tool_calls = []
 
-        # Parse tool calls from accumulated response
-        if not tool_calls:
-            tool_calls = self.engine._parse_tool_calls(full_response)
+            for response in self.engine.chat(
+                messages,
+                tools=tools,
+                temperature=self.config.model.temperature,
+                max_tokens=self.config.model.max_tokens,
+                stream=True,
+            ):
+                if response.tool_calls:
+                    tool_calls.extend(response.tool_calls)
+                if response.content:
+                    full_response += response.content
+                    yield response.content
 
-        # Handle tool calls with visual feedback
-        if tool_calls:
+            # Parse tool calls from response text if engine didn't extract them
+            if not tool_calls:
+                tool_calls = self.engine._parse_tool_calls(full_response)
+
+            # If no tool calls — normal exit (LLM is done)
+            if not tool_calls:
+                self.memory.add_assistant_message(full_response)
+                break
+
+            # Execute tool calls
+            self.memory.add_assistant_message(full_response, tool_calls=[
+                {"name": tc.name, "arguments": tc.arguments} for tc in tool_calls
+            ])
+
             for tc in tool_calls:
+                # Loop detection
+                args_hash = str(sorted(tc.arguments.items())) if tc.arguments else ""
+                call_sig = (tc.name, args_hash)
+                recent_calls.append(call_sig)
+                if recent_calls.count(call_sig) >= 3:
+                    yield f"\n⚠ Detected loop: called {tc.name} with same args 3 times. Stopping.\n"
+                    return
+
+                # Permission check
+                command = tc.arguments.get("command", "") if tc.name == "run_command" else ""
+                allowed = permission_manager.should_allow(tc.name, command)
+
+                if allowed is False:
+                    reason = permission_manager.get_block_reason(command) if command else "Denied"
+                    self.console.print(f"  [red]✘ Blocked: {reason}[/red]")
+                    self.memory.add_tool_result(tc.name, f"BLOCKED: {reason}")
+                    consecutive_errors += 1
+                    continue
+                elif allowed is None:
+                    # Need to prompt user
+                    detail = f"{tc.name}({', '.join(f'{k}={repr(v)[:30]}' for k,v in tc.arguments.items())})"
+                    decision = permission_manager.prompt_user(self.console, tc.name, detail)
+                    if decision == PermissionDecision.DENY:
+                        self.memory.add_tool_result(tc.name, "DENIED by user")
+                        continue
+                    # ALLOW_ONCE, TRUST, TRUST_ALL all allow execution
+
+                # Execute tool with visual feedback
                 yield "\n"
-                self.console.print(
-                    f"  {ICONS['processing']} [bold]Using:[/bold] {tc.name}"
-                )
+                self.console.print(f"  [cyan]⠧[/cyan] [bold]Using:[/bold] {tc.name}")
 
                 result = self._execute_tool(tc.name, tc.arguments)
                 self._show_tool_result(tc.name, tc.arguments, result)
+
+                # Track errors
+                if not result.success:
+                    consecutive_errors += 1
+                    if consecutive_errors >= 5:
+                        yield "\n⚠ 5 consecutive errors. Pausing — here's what's failing:\n"
+                        yield f"Last error: {result.error}\n"
+                        return
+                else:
+                    consecutive_errors = 0
+
+                # Add result to memory
                 self.memory.add_tool_result(
                     tc.name, result.output or result.error or ""
                 )
 
-                # Get follow-up response
-                yield from self._get_followup_response(tc.name, result)
+                # Context refresh if needed
+                if self.context.should_refresh(tc.name):
+                    self.context.refresh_git_only()
 
-        self.memory.add_assistant_message(full_response, tool_calls=[
-            {"name": tc.name, "arguments": tc.arguments} for tc in tool_calls
-        ])
+            # Keep recent_calls bounded
+            if len(recent_calls) > 30:
+                recent_calls = recent_calls[-15:]
+
+        else:
+            # Safety ceiling hit
+            yield "\n⚠ Reached maximum iterations (100). Stopping.\n"
+            yield self._progress_summary()
 
     def _show_tool_result(self, name: str, args: dict, result: ToolResult):
         """Show tool results with appropriate visual animation."""
         if not result.success:
             self.console.print(
-                f"  {ICONS['error']} [red]{result.error}[/red]"
+                f"  {ICONS['fail']} [red]{result.error}[/red]"
             )
             return
 
@@ -162,7 +236,7 @@ class Agent:
                 show_write_lines(self.console, filepath, content)
             else:
                 self.console.print(
-                    f"  {ICONS['success']} [green]{result.output}[/green]"
+                    f"  {ICONS['done']} [green]{result.output}[/green]"
                 )
 
         # File edit: red -lines then green +lines
@@ -178,7 +252,7 @@ class Agent:
                 show_read_shimmer(self.console, filepath, content)
             else:
                 self.console.print(
-                    f"  {ICONS['success']} {result.output[:300]}"
+                    f"  {ICONS['done']} {result.output[:300]}"
                 )
 
         # Other tools: plain output
@@ -186,28 +260,12 @@ class Agent:
             output = result.output[:500] if result.output else ""
             if output:
                 self.console.print(
-                    f"  {ICONS['success']} [green]{output}[/green]"
+                    f"  {ICONS['done']} [green]{output}[/green]"
                 )
 
-    def _get_followup_response(
-        self, tool_name: str, result: ToolResult
-    ) -> Generator[str, None, None]:
-        """Get a follow-up response after tool execution."""
-        followup_messages = self.memory.get_messages()
-        followup_messages.append(ChatMessage(
-            role="tool",
-            content=f"Tool '{tool_name}' result: {result.output or result.error}",
-            tool_call_id=f"result_{tool_name}",
-        ))
-        yield "\n"
-        for response in self.engine.chat(
-            followup_messages,
-            temperature=self.config.model.temperature,
-            max_tokens=self.config.model.max_tokens,
-            stream=True,
-        ):
-            if response.content:
-                yield response.content
+    def _progress_summary(self) -> str:
+        """Generate a progress summary when stopped mid-task."""
+        return "Say 'continue' to resume where I left off.\n"
 
     def _execute_tool(self, name: str, arguments: dict) -> ToolResult:
         """Execute a tool by name."""
@@ -224,7 +282,12 @@ class Agent:
     def clear_memory(self):
         """Clear conversation memory."""
         self.memory.clear()
-        self.memory.set_system_prompt(SYSTEM_PROMPT)
+        ctx = self.context.current
+        system_prompt = build_system_prompt(
+            context_block=ctx.render_for_prompt() if ctx else "",
+            persona_block=self.persona.render_summary()
+        )
+        self.memory.set_system_prompt(system_prompt)
 
     def get_memory(self) -> ConversationMemory:
         return self.memory
