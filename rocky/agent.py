@@ -85,18 +85,31 @@ class Agent:
         full_response = ""
         tool_calls = []
 
+        # Collect full response first to detect tool calls
         for response in self.engine.chat(
             messages,
             tools=tools,
             temperature=self.config.model.temperature,
             max_tokens=self.config.model.max_tokens,
-            stream=True,
+            stream=False,
         ):
-            if response.content:
-                full_response += response.content
-                yield response.content
-            if response.tool_calls:
-                tool_calls.extend(response.tool_calls)
+            full_response += response.content
+            tool_calls.extend(response.tool_calls)
+
+        # If no native tool calls, parse from text
+        if not tool_calls:
+            tool_calls = self.engine._parse_tool_calls(full_response)
+
+        # Yield clean text (strip tool call markup)
+        if tool_calls:
+            import re
+            clean = re.sub(
+                r'<tool_call>[\s\S]*?</tool_call>', '', full_response
+            ).strip()
+            if clean:
+                yield clean
+        else:
+            yield full_response
 
         # Handle tool calls with visual feedback
         if tool_calls:

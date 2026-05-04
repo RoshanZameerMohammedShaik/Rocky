@@ -57,7 +57,8 @@ class RockyCLI:
                 user_input = input_handler.get_input("You: ")
 
                 if user_input is None:
-                    continue
+                    self.running = False
+                    break
 
                 user_input = user_input.strip()
 

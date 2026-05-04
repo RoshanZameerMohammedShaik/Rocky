@@ -330,46 +330,86 @@ class LlamaCppEngine:
             })
         return formatted
 
+    @staticmethod
+    def _fix_json(text: str) -> str:
+        """Fix common JSON issues from model output.
+
+        Models sometimes double the outer braces: {{"name":...}}
+        instead of {"name":...}. Strip matched extra outer braces.
+        """
+        fixed = text.strip()
+        # If it starts with {{ and ends with }}, strip one layer
+        if (
+            fixed.startswith('{{')
+            and fixed.endswith('}}')
+            and not fixed.startswith('{{{')
+        ):
+            fixed = fixed[1:-1]
+        return fixed
+
     def _parse_tool_calls(self, text: str) -> list[ToolCall]:
         """Parse tool calls from model text output.
 
         Supports multiple formats:
-        1. Qwen3 native: <tool_call>{"name": "...", "arguments": {...}}</tool_call>
-        2. JSON blocks: ```json\n{"tool": "...", "arguments": {...}}\n```
-        3. Direct JSON: {"tool": "...", "arguments": {...}}
+        1. <tool_call>{"name": "...", "arguments": {...}}</tool_call>
+        2. ```json {"tool": "...", "arguments": {...}} ```
+        3. Inline {"tool": "...", "arguments": {...}}
+
+        Handles malformed JSON (doubled braces, etc).
         """
         tool_calls = []
         call_id = 0
 
-        # Pattern 1: Qwen3 <tool_call> tags
-        qwen_pattern = r'<tool_call>\s*(\{.*?\})\s*</tool_call>'
-        for match in re.finditer(qwen_pattern, text, re.DOTALL):
+        # Pattern 1: <tool_call> tags (greedy to capture nested braces)
+        qwen_pattern = r'<tool_call>\s*([\s\S]*?)\s*</tool_call>'
+        for match in re.finditer(qwen_pattern, text):
+            raw = self._fix_json(match.group(1).strip())
             try:
-                data = json.loads(match.group(1))
-                name = data.get("name", "")
-                args = data.get("arguments", {})
-                if isinstance(args, str):
-                    args = json.loads(args)
-                if name:
-                    tool_calls.append(ToolCall(
-                        id=f"call_{call_id}",
-                        name=name,
-                        arguments=args,
-                    ))
-                    call_id += 1
+                data = json.loads(raw)
             except json.JSONDecodeError:
-                continue
+                # Try to extract JSON object from the raw text
+                obj_match = re.search(r'\{.*\}', raw, re.DOTALL)
+                if obj_match:
+                    try:
+                        data = json.loads(obj_match.group(0))
+                    except json.JSONDecodeError:
+                        continue
+                else:
+                    continue
+
+            name = data.get("name", "")
+            args = data.get("arguments", {})
+            if isinstance(args, str):
+                try:
+                    args = json.loads(args)
+                except json.JSONDecodeError:
+                    args = {}
+            if name:
+                tool_calls.append(ToolCall(
+                    id=f"call_{call_id}",
+                    name=name,
+                    arguments=args,
+                ))
+                call_id += 1
 
         if tool_calls:
             return tool_calls
 
-        # Pattern 2: JSON code blocks with tool/function pattern
+        # Pattern 2: JSON code blocks
         json_block_pattern = r'```json\s*\n?\s*(\{[^`]+\})\s*\n?```'
         for match in re.finditer(json_block_pattern, text, re.DOTALL):
+            raw = self._fix_json(match.group(1))
             try:
-                data = json.loads(match.group(1))
-                name = data.get("tool") or data.get("name") or data.get("function", "")
-                args = data.get("arguments", data.get("params", data.get("parameters", {})))
+                data = json.loads(raw)
+                name = (
+                    data.get("tool")
+                    or data.get("name")
+                    or data.get("function", "")
+                )
+                args = data.get(
+                    "arguments",
+                    data.get("params", data.get("parameters", {})),
+                )
                 if isinstance(args, str):
                     args = json.loads(args)
                 if name:
@@ -385,12 +425,13 @@ class LlamaCppEngine:
         if tool_calls:
             return tool_calls
 
-        # Pattern 3: Inline JSON with tool key
-        inline_pattern = r'(\{"tool":\s*"[^"]+",\s*"arguments":\s*\{[^}]+\}\})'
+        # Pattern 3: Inline JSON with tool or name key
+        inline_pattern = r'(\{["\s]*(?:tool|name)["\s]*:[\s\S]*?\})\s*\}'
         for match in re.finditer(inline_pattern, text):
+            raw = self._fix_json(match.group(0))
             try:
-                data = json.loads(match.group(1))
-                name = data.get("tool", "")
+                data = json.loads(raw)
+                name = data.get("tool") or data.get("name", "")
                 args = data.get("arguments", {})
                 if isinstance(args, str):
                     args = json.loads(args)
