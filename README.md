@@ -48,13 +48,17 @@ On first run, Rocky downloads its AI model (~3GB). After that, it works fully of
 
 ## Models
 
-| Model | Size | RAM Needed | Best For |
-|-------|------|-----------|----------|
-| Qwen2.5-0.5B | ~530MB | 4GB+ | Low-RAM systems |
-| Qwen2.5-3B (default) | ~2.2GB | 8GB+ | Best balance of speed and quality |
-| Qwen2.5-7B | ~3.5GB | 12GB+ | Maximum quality |
+Rocky ships with 10 models and auto-selects the best one for your hardware at install time.
 
-Switch models with `/models` and `/model` commands inside Rocky.
+| Tier | Model | Size | RAM | Best For |
+|------|-------|------|-----|----------|
+| 1 | Qwen2.5-0.5B Q4/Q8 | 400-530 MB | 2-4 GB | Ultra-light, any hardware |
+| 2 | Qwen2.5-1.5B Q4/Q8 | 1.0-1.6 GB | 4-8 GB | Light, good for CPU-only |
+| 3 | Qwen2.5-3B Q4/Q5 | 1.8-2.2 GB | 8-12 GB | Default for GPU systems |
+| 4 | Qwen2.5-7B Q2/Q3 | 2.8-3.5 GB | 12-16 GB | High quality |
+| 5 | Qwen2.5-Coder-7B Q4/Q8 | 4.2-7.7 GB | 16 GB+ | Premium, coding specialist |
+
+Switch models with `/models` inside Rocky. Re-detect hardware with `python -m rocky.setup_model`.
 
 ## License
 

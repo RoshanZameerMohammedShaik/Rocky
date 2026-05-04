@@ -1287,39 +1287,54 @@
     <div class="container">
         <div class="animate-on-scroll">
             <div class="section-label">Models</div>
-            <h2 class="section-title">Choose your model</h2>
-            <p class="section-desc">Rocky auto-selects the best model for your hardware. Switch anytime with <code>/models</code>.</p>
+            <h2 class="section-title">10 models, auto-selected</h2>
+            <p class="section-desc">Rocky detects your hardware at install time and downloads the best model. Switch anytime with <code>/models</code>.</p>
         </div>
 
-        <div class="models-grid animate-on-scroll">
+        <div class="models-grid animate-on-scroll" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
             <div class="model-card">
-                <span class="tag">Lightweight</span>
+                <span class="tag">Tier 1 &middot; Ultra-Light</span>
                 <h4>Qwen2.5-0.5B</h4>
                 <div class="specs">
-                    <div class="spec"><span class="label">Size</span><span class="value">~530 MB</span></div>
-                    <div class="spec"><span class="label">RAM needed</span><span class="value">4 GB+</span></div>
-                    <div class="spec"><span class="label">Quantization</span><span class="value">Q8_0</span></div>
-                    <div class="spec"><span class="label">Best for</span><span class="value">Low-RAM systems</span></div>
+                    <div class="spec"><span class="label">Size</span><span class="value">400-530 MB</span></div>
+                    <div class="spec"><span class="label">RAM</span><span class="value">2-4 GB</span></div>
+                    <div class="spec"><span class="label">Q</span><span class="value">Q4_K_M / Q8_0</span></div>
+                </div>
+            </div>
+            <div class="model-card">
+                <span class="tag">Tier 2 &middot; Light</span>
+                <h4>Qwen2.5-1.5B</h4>
+                <div class="specs">
+                    <div class="spec"><span class="label">Size</span><span class="value">1.0-1.6 GB</span></div>
+                    <div class="spec"><span class="label">RAM</span><span class="value">4-8 GB</span></div>
+                    <div class="spec"><span class="label">Q</span><span class="value">Q4_K_M / Q8_0</span></div>
                 </div>
             </div>
             <div class="model-card recommended">
-                <span class="tag default">Default &middot; Recommended</span>
-                <h4>Qwen2.5-3B Instruct</h4>
+                <span class="tag default">Tier 3 &middot; Default</span>
+                <h4>Qwen2.5-3B</h4>
                 <div class="specs">
-                    <div class="spec"><span class="label">Size</span><span class="value">~2.2 GB</span></div>
-                    <div class="spec"><span class="label">RAM needed</span><span class="value">8 GB+</span></div>
-                    <div class="spec"><span class="label">Quantization</span><span class="value">Q5_K_M</span></div>
-                    <div class="spec"><span class="label">Best for</span><span class="value">Best balance</span></div>
+                    <div class="spec"><span class="label">Size</span><span class="value">1.8-2.2 GB</span></div>
+                    <div class="spec"><span class="label">RAM</span><span class="value">8-12 GB</span></div>
+                    <div class="spec"><span class="label">Q</span><span class="value">Q4_K_M / Q5_K_M</span></div>
                 </div>
             </div>
             <div class="model-card">
-                <span class="tag">High Quality</span>
-                <h4>Qwen2.5-7B Instruct</h4>
+                <span class="tag">Tier 4 &middot; High</span>
+                <h4>Qwen2.5-7B</h4>
                 <div class="specs">
-                    <div class="spec"><span class="label">Size</span><span class="value">~3.5 GB</span></div>
-                    <div class="spec"><span class="label">RAM needed</span><span class="value">12 GB+</span></div>
-                    <div class="spec"><span class="label">Quantization</span><span class="value">Q3_K_M</span></div>
-                    <div class="spec"><span class="label">Best for</span><span class="value">Max quality</span></div>
+                    <div class="spec"><span class="label">Size</span><span class="value">2.8-3.5 GB</span></div>
+                    <div class="spec"><span class="label">RAM</span><span class="value">12-16 GB</span></div>
+                    <div class="spec"><span class="label">Q</span><span class="value">Q2_K / Q3_K_M</span></div>
+                </div>
+            </div>
+            <div class="model-card">
+                <span class="tag">Tier 5 &middot; Premium</span>
+                <h4>Qwen2.5-Coder-7B</h4>
+                <div class="specs">
+                    <div class="spec"><span class="label">Size</span><span class="value">4.2-7.7 GB</span></div>
+                    <div class="spec"><span class="label">RAM</span><span class="value">16 GB+ &middot; GPU</span></div>
+                    <div class="spec"><span class="label">Q</span><span class="value">Q4_K_M / Q8_0</span></div>
                 </div>
             </div>
         </div>
