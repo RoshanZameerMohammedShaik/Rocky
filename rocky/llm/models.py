@@ -106,6 +106,8 @@ class ModelManager:
 
     def _load_model(self, model_key: str) -> bool:
         """Load a model into the engine."""
+        from rocky.utils.platform import has_gpu, get_cpu_count
+
         model_path = self.downloader.get_model_path(model_key)
         if not model_path:
             self.console.print(f"[red]Model not found: {model_key}[/red]")
@@ -116,13 +118,20 @@ class ModelManager:
 
         self.console.print(f"[dim]Loading {model_name}...[/dim]")
 
-        # Determine GPU layers
-        n_gpu_layers = -1  # Use all available GPU layers by default
+        gpu = has_gpu()
+        n_gpu_layers = -1 if gpu else 0
+        # Use all available CPU threads for faster inference
+        n_threads = get_cpu_count() if not gpu else None
+        # Reduce context on CPU-only for speed
+        n_ctx = self.config.model.context_length
+        if not gpu and n_ctx > 4096:
+            n_ctx = 4096
 
         success = self.engine.load_model(
             model_path=str(model_path),
-            n_ctx=self.config.model.context_length,
+            n_ctx=n_ctx,
             n_gpu_layers=n_gpu_layers,
+            n_threads=n_threads,
             verbose=False,
         )
 

@@ -11,7 +11,7 @@ import platform
 @dataclass
 class ModelConfig:
     """Model configuration."""
-    default: str = "qwen2.5-3b"  # Model key from registry
+    default: str = "auto"  # "auto" = pick best for hardware, or model key
     context_length: int = 8192
     temperature: float = 0.7
     max_tokens: int = 4096

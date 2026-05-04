@@ -65,5 +65,39 @@ def get_memory_gb() -> float:
         import psutil
         return psutil.virtual_memory().total / (1024**3)
     except ImportError:
-        # Fallback for systems without psutil
-        return 8.0  # Assume minimum
+        return 8.0
+
+
+def has_gpu() -> bool:
+    """Check if a usable GPU is available for inference.
+
+    Detects: Apple Metal (macOS), NVIDIA CUDA, or Vulkan.
+    """
+    plat = get_platform()
+
+    # macOS with Apple Silicon always has Metal
+    if plat == "macos":
+        import subprocess
+        try:
+            result = subprocess.run(
+                ["sysctl", "-n", "hw.optional.arm64"],
+                capture_output=True, text=True, timeout=5,
+            )
+            if result.stdout.strip() == "1":
+                return True
+        except Exception:
+            pass
+
+    # Check for NVIDIA GPU
+    if is_command_available("nvidia-smi"):
+        return True
+
+    # Check if CUDA libraries are loadable
+    try:
+        import ctypes
+        ctypes.cdll.LoadLibrary("libcuda.so")
+        return True
+    except Exception:
+        pass
+
+    return False

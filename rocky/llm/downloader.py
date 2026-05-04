@@ -304,16 +304,21 @@ class ModelDownloader:
         return False
 
     def get_recommended_model(self) -> str:
-        """Get the recommended model key based on system resources."""
-        from rocky.utils.platform import get_memory_gb
+        """Get the recommended model key based on system resources and GPU."""
+        from rocky.utils.platform import get_memory_gb, has_gpu
 
         ram_gb = get_memory_gb()
+        gpu = has_gpu()
 
-        if ram_gb >= 12:
-            return "qwen2.5-7b"
-        elif ram_gb >= 8:
+        if gpu:
+            # GPU available — use larger models, they'll be fast
+            if ram_gb >= 12:
+                return "qwen2.5-7b"
             return "qwen2.5-3b"
         else:
+            # CPU only — use smaller model for acceptable speed
+            if ram_gb >= 16:
+                return "qwen2.5-3b"
             return "qwen2.5-0.5b"
 
 
