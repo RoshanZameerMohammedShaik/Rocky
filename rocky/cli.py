@@ -7,11 +7,14 @@ from rich.console import Console
 
 from rocky import __version__, __app_name__
 from rocky.agent import Agent
+from rocky.agent_runner import AgentRunner
 from rocky.session import SessionManager
 from rocky.ui.splash import show_splash, show_goodbye
 from rocky.ui.input import get_input_handler
 from rocky.ui.permissions import get_permission_manager
 from rocky.ui.animations import ICONS
+from rocky.ui.menu import ArrowMenu
+from rocky.tools.shell import get_job_manager
 from rocky.utils.logging import setup_logging, get_logger
 
 logger = get_logger(__name__)
@@ -23,6 +26,7 @@ class RockyCLI:
     def __init__(self):
         self.console = Console()
         self.agent: Optional[Agent] = None
+        self.runner: Optional[AgentRunner] = None
         self.session_manager = SessionManager()
         self.running = True
 
@@ -30,8 +34,30 @@ class RockyCLI:
         signal.signal(signal.SIGINT, self._handle_interrupt)
 
     def _handle_interrupt(self, sig, frame):
-        """Handle Ctrl+C gracefully."""
-        self.console.print("\n[yellow]Interrupted. Type /quit to exit.[/yellow]")
+        """Handle Ctrl+C — stop agent when working, quit menu when idle."""
+        if self.runner and self.runner.is_working:
+            self.runner.request_stop()
+            self.console.print("\n[yellow]⚠ Stopping...[/yellow]")
+        else:
+            # Show quit menu
+            menu = ArrowMenu(
+                title="Quit Rocky.Ai?",
+                options=["Yes", "No", "Refresh and quit"],
+                default=0,
+                console=self.console,
+            )
+            try:
+                choice = menu.run()
+                if choice == "Yes":
+                    self.running = False
+                elif choice == "Refresh and quit":
+                    if self.agent:
+                        self.agent.persona.save()
+                        self.console.print("  [green]✔ Memory saved[/green]")
+                    self.running = False
+                # "No" = do nothing, return to prompt
+            except Exception:
+                pass  # If menu fails, just ignore
 
     def run(self):
         """Main run loop."""
@@ -45,7 +71,10 @@ class RockyCLI:
         if not self.agent.initialize():
             return 1
 
-        self.console.print(f"[green]{ICONS['success']} Rocky.Ai is ready![/green]")
+        # Initialize runner
+        self.runner = AgentRunner(self.agent, self.console)
+
+        self.console.print(f"[green]{ICONS['done']} Rocky.Ai is ready![/green]")
         self.console.print()
 
         # Get input handler
@@ -70,12 +99,12 @@ class RockyCLI:
                     self._handle_command(user_input)
                     continue
 
-                # Process message
+                # Process message via runner
                 self.console.print()
                 self.console.print("[bold cyan]Rocky:[/bold cyan]", end=" ")
 
-                for chunk in self.agent.process_message(user_input):
-                    self.console.print(chunk, end="")
+                self.runner.start(user_input)
+                self.runner.wait()
 
                 self.console.print()
                 self.console.print()
@@ -98,14 +127,14 @@ class RockyCLI:
         commands = {
             "/help": self._cmd_help,
             "/quit": self._cmd_quit,
-            "/exit": self._cmd_quit,
             "/clear": self._cmd_clear,
             "/save": self._cmd_save,
             "/load": self._cmd_load,
             "/sessions": self._cmd_sessions,
             "/model": self._cmd_model,
-            "/models": self._cmd_models,
-            "/trust": self._cmd_trust,
+            "/tools": self._cmd_tools,
+            "/refresh": self._cmd_refresh,
+            "/jobs": self._cmd_jobs,
             "/version": self._cmd_version,
         }
 
@@ -119,18 +148,21 @@ class RockyCLI:
     def _cmd_help(self, args: str):
         """Show help."""
         help_text = """
-[bold]Available Commands:[/bold]
+[bold]Commands:[/bold]
 
-  /help          Show this help message
-  /quit, /exit   Exit Rocky.Ai
+  /help          Show this help
+  /quit          Exit Rocky.Ai (or Ctrl+C when idle)
   /clear         Clear conversation history
-  /save [name]   Save current session
+  /model [name]  Show current model / switch model
+  /tools         Manage permissions (list/trust/deny/reset)
+  /refresh       Save memory checkpoint
+  /jobs          Show background job status
+  /save [name]   Save session
   /load <name>   Load a saved session
   /sessions      List saved sessions
-  /model         Show current model info
-  /models        List available models
-  /trust         Enable trust mode (skip permission prompts)
-  /version       Show version info
+  /version       Show version
+
+[dim]Tip: Use /refresh to keep my memory updated[/dim]
 """
         self.console.print(help_text)
 
@@ -142,7 +174,7 @@ class RockyCLI:
         """Clear conversation."""
         if self.agent:
             self.agent.clear_memory()
-        self.console.print(f"[green]{ICONS['success']} Conversation cleared.[/green]")
+        self.console.print(f"[green]{ICONS['done']} Conversation cleared.[/green]")
 
     def _cmd_save(self, args: str):
         """Save session."""
@@ -151,7 +183,7 @@ class RockyCLI:
 
         name = args.strip() if args else None
         saved_name = self.session_manager.save_session(self.agent.get_memory(), name)
-        self.console.print(f"[green]{ICONS['success']} Session saved as: {saved_name}[/green]")
+        self.console.print(f"[green]{ICONS['done']} Session saved as: {saved_name}[/green]")
 
     def _cmd_load(self, args: str):
         """Load session."""
@@ -166,7 +198,7 @@ class RockyCLI:
         memory = self.session_manager.load_session(name)
         if memory:
             self.agent.set_memory(memory)
-            self.console.print(f"[green]{ICONS['success']} Loaded session: {name}[/green]")
+            self.console.print(f"[green]{ICONS['done']} Loaded session: {name}[/green]")
         else:
             self.console.print(f"[red]Session not found: {name}[/red]")
 
@@ -183,45 +215,100 @@ class RockyCLI:
             self.console.print(f"  {s['name']} ({s['turns']} turns) - {s['created'][:10]}")
 
     def _cmd_model(self, args: str):
-        """Show current model info."""
+        """Show current model or switch model."""
         if not self.agent:
             return
 
-        model_name = self.agent.model_manager.get_text_model()
-        info = self.agent.engine.get_model_info()
+        args = args.strip()
 
-        self.console.print(f"[bold]Current Model:[/bold] {model_name}")
-        if info.get("loaded"):
-            self.console.print(f"  Context: {info.get('n_ctx', 'N/A')} tokens")
-            self.console.print(f"  Path: [dim]{info.get('path', 'N/A')}[/dim]")
+        if not args:
+            # Show current model + list all
+            model_name = self.agent.model_manager.get_text_model()
+            info = self.agent.engine.get_model_info()
 
-    def _cmd_models(self, args: str):
-        """List available models."""
-        if not self.agent:
-            return
-
-        from rocky.llm.downloader import format_size
-
-        models = self.agent.model_manager.list_models()
-
-        self.console.print("[bold]Available Models:[/bold]")
-        self.console.print()
-        for m in models:
-            status = "[green]downloaded[/green]" if m["downloaded"] else "[dim]not downloaded[/dim]"
-            self.console.print(
-                f"  [bold]{m['key']}[/bold] - {m['name']} "
-                f"({m['parameters']}, {m['quantization']}, "
-                f"{format_size(m['size_bytes'])}) [{status}]"
-            )
-            self.console.print(f"    {m['description']}")
+            self.console.print(f"[bold]Current Model:[/bold] {model_name}")
+            if info.get("loaded"):
+                self.console.print(f"  Context: {info.get('n_ctx', 'N/A')} tokens")
             self.console.print()
 
-    def _cmd_trust(self, args: str):
-        """Enable trust mode."""
+            # Also list available models
+            from rocky.llm.downloader import format_size
+            models = self.agent.model_manager.list_models()
+            self.console.print("[bold]Available Models:[/bold]")
+            for m in models:
+                current = " [green]◀ current[/green]" if m['key'] == model_name else ""
+                status = "[green]downloaded[/green]" if m["downloaded"] else "[dim]not downloaded[/dim]"
+                self.console.print(
+                    f"  {m['key']} — {m['name']} "
+                    f"({m['parameters']}, {format_size(m['size_bytes'])}) "
+                    f"[{status}]{current}"
+                )
+        else:
+            # Switch model
+            self.console.print(f"  Switching to [bold]{args}[/bold]...")
+            # Model switching would go here (future implementation)
+            self.console.print("  [yellow]Model switching not yet implemented[/yellow]")
+
+    def _cmd_tools(self, args: str):
+        """Manage tool permissions."""
         perm_manager = get_permission_manager()
-        perm_manager.enable_trust()
-        self.console.print(f"[green]{ICONS['success']} Trust mode enabled for this session.[/green]")
-        self.console.print("[dim]All commands will run without permission prompts.[/dim]")
+        parts = args.strip().split()
+
+        if not parts or parts[0] == "list":
+            status = perm_manager.get_status()
+            self.console.print("[bold]Permission State:[/bold]")
+            if status["trust_all"]:
+                self.console.print("  Mode: [green]Trust-All[/green]")
+            else:
+                self.console.print("  Mode: Per-tool prompts")
+            if status["trusted_tools"]:
+                self.console.print(f"  Trusted: {', '.join(status['trusted_tools'])}")
+            if status["denied_tools"]:
+                self.console.print(f"  Denied: {', '.join(status['denied_tools'])}")
+
+        elif parts[0] == "trust" and len(parts) > 1:
+            tool_name = parts[1]
+            perm_manager.trust_tool(tool_name)
+            self.console.print(f"  [green]✔ Trusted '{tool_name}' for this session[/green]")
+
+        elif parts[0] == "trust-all":
+            perm_manager.trust_all()
+            self.console.print("  [green]✔ All tools trusted for this session[/green]")
+            self.console.print("  [yellow]⚠ Rocky can now run any command without asking[/yellow]")
+
+        elif parts[0] == "deny" and len(parts) > 1:
+            tool_name = parts[1]
+            perm_manager.deny_tool(tool_name)
+            self.console.print(f"  [red]✘ Denied '{tool_name}' for this session[/red]")
+
+        elif parts[0] == "reset":
+            perm_manager.reset()
+            self.console.print("  [green]✔ Permissions reset to defaults[/green]")
+
+        else:
+            self.console.print("Usage: /tools [list|trust <tool>|trust-all|deny <tool>|reset]")
+
+    def _cmd_refresh(self, args: str):
+        """Memory checkpoint — save persona and learnings."""
+        if self.agent:
+            self.agent.persona.save()
+            self.console.print("  [green]✔ Memory checkpoint saved[/green]")
+            self.console.print("  [dim]Persona and learnings persisted to ~/.rocky/persona/[/dim]")
+
+    def _cmd_jobs(self, args: str):
+        """Show background job status."""
+        manager = get_job_manager()
+        jobs = manager.list_jobs()
+
+        if not jobs:
+            self.console.print("  [dim]No background jobs.[/dim]")
+            return
+
+        for job in jobs:
+            status = "[green]✔ done[/green]" if job.completed else "[cyan]⠧ running[/cyan]"
+            self.console.print(f"  Job #{job.id}: {status} — {job.command[:60]}")
+            if job.completed and job.exit_code != 0:
+                self.console.print(f"    [red]Exit: {job.exit_code}[/red]")
 
     def _cmd_version(self, args: str):
         """Show version."""
