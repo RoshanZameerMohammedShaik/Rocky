@@ -10,12 +10,14 @@ from rocky.tools.base import ToolResult, get_tool_registry
 from rocky.tools.files import (
     ReadFileTool, WriteFileTool, EditFileTool,
     ListDirectoryTool, SearchFilesTool,
+    GlobFilesTool, SummarizeFileTool,
 )
 from rocky.tools.shell import RunCommandTool
 from rocky.tools.web import WebSearchTool, WebFetchTool
 from rocky.tools.media import DescribeImageTool, TranscribeAudioTool, ProcessVideoTool
 from rocky.tools.git import GitStatusTool, GitDiffTool, GitLogTool, GitCommitTool
 from rocky.tools.knowledge import IndexFilesTool, SearchKnowledgeTool
+from rocky.tools.task_plan import TaskPlanTool
 from rocky.ui.animations import (
     ICONS, show_write_lines, show_edit_diff, show_read_shimmer,
 )
@@ -48,12 +50,14 @@ class Agent:
         tools = [
             ReadFileTool(), WriteFileTool(), EditFileTool(),
             ListDirectoryTool(), SearchFilesTool(),
+            GlobFilesTool(), SummarizeFileTool(),
             RunCommandTool(self.console),
             WebSearchTool(), WebFetchTool(),
             DescribeImageTool(), TranscribeAudioTool(), ProcessVideoTool(),
             GitStatusTool(), GitDiffTool(), GitLogTool(),
             GitCommitTool(self.console),
             IndexFilesTool(), SearchKnowledgeTool(),
+            TaskPlanTool(),
         ]
         for tool in tools:
             registry.register(tool)
