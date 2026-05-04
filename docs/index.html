@@ -848,6 +848,7 @@
         .animate-on-scroll.visible .feature-card:nth-child(7) { transition-delay: 0.35s; }
         .animate-on-scroll.visible .feature-card:nth-child(8) { transition-delay: 0.4s; }
         .animate-on-scroll.visible .feature-card:nth-child(9) { transition-delay: 0.45s; }
+        .animate-on-scroll.visible .feature-card:nth-child(10) { transition-delay: 0.5s; }
 
         .feature-card {
             opacity: 0;
@@ -962,17 +963,17 @@
             <div class="feature-card">
                 <span class="feature-icon">&#x1F4BB;</span>
                 <h3>Shell Commands</h3>
-                <p>Execute terminal commands with tiered permission system. Run commands in background with job tracking and output capture.</p>
+                <p>Execute terminal commands with background job tracking. Dangerous commands are blocked. You stay in control.</p>
             </div>
             <div class="feature-card">
                 <span class="feature-icon">&#x1F6E1;</span>
                 <h3>Tiered Permission System</h3>
-                <p>Allow once, Deny, Trust-for-session, or eXit. Dangerous commands flagged. Use /tools to manage permissions and trust settings.</p>
+                <p>Allow-Once, Deny, Trust tool, or Trust-All. Blocked patterns for fork bombs, disk wipes. All permissions reset per session.</p>
             </div>
             <div class="feature-card">
                 <span class="feature-icon">&#x1F310;</span>
-                <h3>Web Search</h3>
-                <p>Search DuckDuckGo and fetch web pages. Works when online, gracefully handles offline mode.</p>
+                <h3>Web Search &amp; Fetch</h3>
+                <p>Search DuckDuckGo and fetch web pages directly in conversation. Works when online, gracefully handles offline mode.</p>
             </div>
             <div class="feature-card">
                 <span class="feature-icon">&#x1F500;</span>
@@ -980,44 +981,14 @@
                 <p>Check status, view diffs, browse logs, and create commits directly from the conversation.</p>
             </div>
             <div class="feature-card">
-                <span class="feature-icon">&#x1F4DA;</span>
-                <h3>Knowledge Base</h3>
-                <p>Index your files into a searchable knowledge base. Rocky remembers your codebase.</p>
-            </div>
-            <div class="feature-card">
                 <span class="feature-icon">&#x1F4AC;</span>
                 <h3>/btw Mid-Task Steering</h3>
-                <p>Inject instructions mid-task with /btw — change direction, add constraints, or clarify requirements while Rocky is working.</p>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">&#x1F4CA;</span>
-                <h3>Dynamic Context Awareness</h3>
-                <p>Rocky auto-refreshes environment info (cwd, git state, timestamp) every turn to stay aware of system changes.</p>
+                <p>Inject instructions while Rocky is working. Change direction, add constraints, or correct course without stopping the agent loop.</p>
             </div>
             <div class="feature-card">
                 <span class="feature-icon">&#x26A1;</span>
                 <h3>GPU Auto-Detection</h3>
                 <p>Automatically uses Metal on macOS, CUDA on NVIDIA, Vulkan on AMD. Falls back to CPU gracefully.</p>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">&#x1F4BE;</span>
-                <h3>Session Management</h3>
-                <p>Save and resume conversations. Pick up exactly where you left off.</p>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">&#x1F3A8;</span>
-                <h3>Rich Markdown Streaming</h3>
-                <p>Rocky renders responses with syntax-highlighted code blocks, tables, and formatted text in real-time as it thinks.</p>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">&#x2328;</span>
-                <h3>Arrow-Key Menus</h3>
-                <p>Quit confirmations and permission prompts use intuitive arrow-key navigation with visual selection indicators.</p>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">&#x1F3A7;</span>
-                <h3>Audio Transcription</h3>
-                <p>Transcribe audio files with Whisper. Optional install, works offline once set up.</p>
             </div>
         </div>
     </div>
