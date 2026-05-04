@@ -14,23 +14,39 @@ import sys
 from typing import Optional
 from rich.console import Console
 from rich.text import Text
+from rich.spinner import Spinner
 from contextlib import contextmanager
 
 
-# Status icons
+# Fixed-width status icons (width=2 for alignment)
 ICONS = {
-    "thinking": "\u2588\u2588",
-    "reading": "\u25B6",
-    "writing": "\u270F",
-    "analyzing": "\u2318",
-    "searching": "\u2315",
-    "transcribing": "\u266B",
-    "learning": "\u2261",
-    "processing": "\u2699",
-    "success": "\u2714",
-    "error": "\u2718",
-    "warning": "\u26A0",
+    "done": "✔",
+    "fail": "✘",
+    "warn": "⚠",
+    "pending": "◦",
+    "processing": "⠧",  # placeholder for spinner display
 }
+
+ICON_STYLES = {
+    "done": "green",
+    "fail": "red",
+    "warn": "yellow",
+    "pending": "red",
+    "processing": "cyan",
+}
+
+
+def icon_text(name: str, pad: int = 2) -> Text:
+    """Get a fixed-width icon as Rich Text for alignment."""
+    char = ICONS.get(name, "•")
+    style = ICON_STYLES.get(name, "")
+    t = Text(f"{char:>{pad}}", style=style)
+    return t
+
+
+def get_spinner() -> Spinner:
+    """Get the standard Rocky braille dot spinner."""
+    return Spinner("dots", style="cyan")
 
 
 # ===== RECTANGULAR LOADING DOTS =====
