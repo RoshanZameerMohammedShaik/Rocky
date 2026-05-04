@@ -35,20 +35,38 @@ class OfflineConfig:
 
 
 @dataclass
+class PersonaConfig:
+    """Persona and learning configuration."""
+    enabled: bool = True
+    auto_learn: bool = True  # passive learning from conversations
+    auto_save_interval: int = 10  # auto-save persona every N turns
+
+
+@dataclass
+class PermissionDefaults:
+    """Default permission behavior."""
+    tier0_auto_allow: bool = True  # reads always allowed
+    show_blocked_warning: bool = True
+
+
+@dataclass
 class PathsConfig:
     base: Path = field(default_factory=lambda: Path.home() / ".rocky")
     models: Path = field(default_factory=lambda: Path.home() / ".rocky" / "models")
     sessions: Path = field(default_factory=lambda: Path.home() / ".rocky" / "sessions")
     knowledge: Path = field(default_factory=lambda: Path.home() / ".rocky" / "knowledge")
     logs: Path = field(default_factory=lambda: Path.home() / ".rocky" / "logs")
+    persona: Path = field(default_factory=lambda: Path.home() / ".rocky" / "persona")
 
 
 @dataclass
 class Config:
     model: ModelConfig = field(default_factory=ModelConfig)
     permissions: PermissionsConfig = field(default_factory=PermissionsConfig)
+    permission_defaults: PermissionDefaults = field(default_factory=PermissionDefaults)
     ui: UIConfig = field(default_factory=UIConfig)
     offline: OfflineConfig = field(default_factory=OfflineConfig)
+    persona: PersonaConfig = field(default_factory=PersonaConfig)
     paths: PathsConfig = field(default_factory=PathsConfig)
 
     @classmethod
@@ -74,15 +92,19 @@ class Config:
                 )
             if "permissions" in data:
                 config.permissions = PermissionsConfig(**data["permissions"])
+            if "permission_defaults" in data:
+                config.permission_defaults = PermissionDefaults(**data["permission_defaults"])
             if "ui" in data:
                 config.ui = UIConfig(**data["ui"])
             if "offline" in data:
                 config.offline = OfflineConfig(**data["offline"])
+            if "persona" in data:
+                config.persona = PersonaConfig(**data["persona"])
 
         # Ensure directories exist
         for path_field in [config.paths.base, config.paths.models,
                            config.paths.sessions, config.paths.knowledge,
-                           config.paths.logs]:
+                           config.paths.logs, config.paths.persona]:
             path_field.mkdir(parents=True, exist_ok=True)
 
         return config
@@ -103,11 +125,20 @@ class Config:
                 "gpu_layers": self.model.gpu_layers,
             },
             "permissions": {"auto_trust": self.permissions.auto_trust},
+            "permission_defaults": {
+                "tier0_auto_allow": self.permission_defaults.tier0_auto_allow,
+                "show_blocked_warning": self.permission_defaults.show_blocked_warning,
+            },
             "ui": {
                 "theme": self.ui.theme,
                 "show_thinking": self.ui.show_thinking,
             },
             "offline": {"prefer_offline": self.offline.prefer_offline},
+            "persona": {
+                "enabled": self.persona.enabled,
+                "auto_learn": self.persona.auto_learn,
+                "auto_save_interval": self.persona.auto_save_interval,
+            },
         }
 
         with open(config_path, "w") as f:
