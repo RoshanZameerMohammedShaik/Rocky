@@ -1170,11 +1170,7 @@
                     </tr>
                     <tr>
                         <td class="cmd-name">/quit</td>
-                        <td class="cmd-desc">Exit Rocky (also: /exit)</td>
-                    </tr>
-                    <tr>
-                        <td class="cmd-name">/exit</td>
-                        <td class="cmd-desc">Exit Rocky</td>
+                        <td class="cmd-desc">Exit Rocky (or use Ctrl+C for interactive quit menu)</td>
                     </tr>
                     <tr>
                         <td class="cmd-name">/clear</td>
@@ -1219,7 +1215,7 @@
         <!-- TOOLS -->
         <div class="animate-on-scroll" style="margin-top: 64px;">
             <h3 class="section-title" style="font-size: 1.5rem;">Built-in Tools</h3>
-            <p class="section-desc">Rocky has 16 tools that it can invoke autonomously during conversations.</p>
+            <p class="section-desc">Rocky has 20 tools that it can invoke autonomously during conversations.</p>
         </div>
 
         <div class="tools-grid animate-on-scroll">
@@ -1239,7 +1235,6 @@
                 <h4>Execution</h4>
                 <ul>
                     <li>run_command</li>
-                    <li>run_command_background</li>
                 </ul>
             </div>
             <div class="tool-category">
@@ -1305,24 +1300,32 @@
                     <div class="line"><span class="bold">$ rm -rf ./build/</span></div>
                     <div class="line"><span class="yellow">&#x26A0; Recursive deletion with wildcard</span></div>
                     <div class="line">&nbsp;</div>
-                    <div class="line"><span class="bold">[A]</span><span class="dim">llow once</span> &nbsp;&middot;&nbsp; <span class="bold">[T]</span><span class="dim">rust for session</span> &nbsp;&middot;&nbsp; <span class="bold">[D]</span><span class="dim">eny</span></div>
-                    <div class="line"><span class="cyan">Your choice: </span><span class="green">a</span></div>
+                    <div class="line"><span class="cyan">&#x25B6;</span> <span class="bold">Allow-Once</span></div>
+                    <div class="line">&nbsp;&nbsp; <span class="dim">Deny</span></div>
+                    <div class="line">&nbsp;&nbsp; <span class="dim">Trust 'run_command'</span></div>
+                    <div class="line">&nbsp;&nbsp; <span class="dim">Trust-All &#x26A0;</span></div>
+                    <div class="line">&nbsp;</div>
+                    <div class="line"><span class="dim">Select [1/2/3/4] (1):</span></div>
                 </div>
             </div>
 
             <div style="margin-top: 32px; max-width: 600px;">
                 <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
                     <li style="display: flex; gap: 10px; color: var(--text-dim);">
-                        <strong style="color: var(--text); min-width: 110px;">Allow once</strong>
+                        <strong style="color: var(--text); min-width: 110px;">Allow-Once</strong>
                         Run this single command, ask again next time
-                    </li>
-                    <li style="display: flex; gap: 10px; color: var(--text-dim);">
-                        <strong style="color: var(--text); min-width: 110px;">Trust session</strong>
-                        Skip all permission prompts for the rest of this session
                     </li>
                     <li style="display: flex; gap: 10px; color: var(--text-dim);">
                         <strong style="color: var(--text); min-width: 110px;">Deny</strong>
                         Block the command &mdash; Rocky will suggest alternatives
+                    </li>
+                    <li style="display: flex; gap: 10px; color: var(--text-dim);">
+                        <strong style="color: var(--text); min-width: 110px;">Trust tool</strong>
+                        Trust this specific tool for the rest of the session
+                    </li>
+                    <li style="display: flex; gap: 10px; color: var(--text-dim);">
+                        <strong style="color: var(--text); min-width: 110px;">Trust-All &#x26A0;</strong>
+                        Skip ALL permission prompts (session only, use with caution)
                     </li>
                 </ul>
             </div>

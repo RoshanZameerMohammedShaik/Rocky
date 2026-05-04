@@ -26,7 +26,7 @@ class SessionContext:
     os_name: str = ""
     shell: str = ""
     python_version: str = ""
-    ram_gb: int = 0
+    ram_gb: float = 0
     has_gpu: bool = False
     gpu_name: str = ""
     internet_available: bool = False
