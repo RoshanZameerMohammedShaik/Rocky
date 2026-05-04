@@ -2376,13 +2376,55 @@ git commit -m "feat(ui): cyan progress bar with shimmer for model downloads"
 
 ---
 
-## Task 20: Final Integration — Update /help, Test Full Flow, Update Website
+## Task 20: Final Integration — Startup Banner, /help, Test Full Flow, Update Website
 
 **Files:**
+- Create: `rocky/ui/banner.py`
+- Modify: `rocky/cli.py` (import and display banner on startup)
 - Modify: `docs/index.html`
 - Modify: `README.md`
 
-- [ ] **Step 1: Run full test suite**
+- [ ] **Step 1: Create startup banner**
+
+Create `rocky/ui/banner.py` with a large unicode braille-art "Rocky.Ai" logo displayed on every session start. Use Rich Console for colored output. Banner should be:
+- Large braille/block unicode art spelling "Rocky.Ai"
+- Cyan/blue gradient color scheme
+- Centered in terminal
+- Shows version number and a welcome tagline below the logo
+- Displayed via `show_banner(console)` function called from CLI startup
+
+```python
+"""Rocky.Ai startup banner — braille unicode art logo."""
+from rich.console import Console
+from rich.text import Text
+from rich import box
+
+ROCKY_BANNER = r"""
+⠀⠀⢀⣴⣶⣶⣦⡀⠀⠀⠀⢀⣴⣶⣦⣄⡀⠀⠀⠀⢀⣴⣶⣶⣦⡀⠀⠀⢀⣶⡄⠀⠀⠀⠀⢀⣶⡄⠀⠀⠀⢀⣶⣶⣶⣶⣶⣶⣦⡀⠀
+⠀⠀⣿⡟⠁⠀⠙⣿⡆⠀⣴⡿⠋⠀⠈⠻⣷⡀⠀⠀⣿⡟⠁⠀⠙⣿⡆⠀⢸⣿⡇⠀⠀⠀⠀⢸⣿⡇⠀⠀⠀⢸⣿⡏⠀⠀⠀⠻⣿⡇⠀
+⠀⠀⣿⡇⠀⠀⠀⣿⣇⣾⠟⠀⠀⠀⠀⣠⣿⠇⠀⠀⣿⡇⠀⠀⠀⣿⡇⠀⢸⣿⡇⠀⠀⣀⠀⢸⣿⡇⠀⠀⠀⢸⣿⡇⠀⠀⠀⢀⣿⡇⠀
+⠀⠀⣿⡇⠀⠀⠀⣿⡿⠋⠀⠀⠀⣠⣾⡿⠁⠀⠀⠀⣿⡇⠀⠀⠀⣿⡇⠀⢸⣿⡇⠀⣼⡿⠀⢸⣿⡇⠀⠀⠀⢸⣿⣷⣶⣶⣶⡿⠋⠀⠀
+⠀⠀⣿⡇⠀⠀⠀⠋⠀⠀⠀⠀⣴⡿⠋⠀⠀⠀⠀⠀⣿⡇⠀⠀⠀⣿⡇⠀⢸⣿⡇⣾⠟⠀⠀⢸⣿⡇⠀⠀⠀⢸⣿⡏⠉⠻⣷⡀⠀⠀⠀
+⠀⠀⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠹⣷⣄⠀⠀⠀⠀⠀⣿⡇⠀⠀⠀⣿⡇⠀⢸⣿⡿⣿⣄⠀⠀⢸⣿⡇⠀⠀⠀⢸⣿⡇⠀⠀⠹⣷⡄⠀⠀
+⠀⠀⣿⣧⡀⠀⣀⣼⡇⠀⠀⠀⠀⠘⢿⣦⡀⠀⠀⠀⣿⣧⡀⠀⣀⣿⠇⠀⢸⣿⡇⠹⣿⣦⠀⢸⣿⣧⣀⣀⡀⢸⣿⡇⠀⠀⠀⢻⣿⡄⠀
+⠀⠀⠻⢿⣿⣿⡿⠟⠁⠀⠀⠀⠀⠀⠈⠻⣿⣦⠀⠀⠻⢿⣿⣿⡿⠟⠀⠀⢸⣿⡇⠀⠙⠿⠀⠈⠻⠿⠿⠿⠃⢸⣿⡇⠀⠀⠀⠀⢿⣷⠀
+"""
+
+
+def show_banner(console: Console, version: str = "1.0") -> None:
+    """Display the Rocky.Ai startup banner."""
+    width = console.size.width
+    banner_text = Text(ROCKY_BANNER, style="bold cyan")
+    console.print(banner_text, justify="center")
+
+    tagline = Text(f"Rocky.Ai v{version} — Your local AI assistant", style="dim white")
+    console.print(tagline, justify="center")
+    console.print()
+```
+
+Then in `rocky/cli.py`, import and call `show_banner(self.console, self.config.version)` at session start, before the input loop.
+
+- [ ] **Step 2: Run full test suite**
 
 Run: `pytest tests/ -v 2>&1 | tail -30`
 Expected: All tests PASS
