@@ -758,31 +758,9 @@
         }
 
         /* Rectangular loading dots */
-        .loading-dots-container {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 4px;
-        }
-
-        .loading-dots-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 8px);
-            grid-template-rows: repeat(2, 8px);
-            gap: 4px;
-        }
-
-        .loading-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--accent);
-            opacity: 0.2;
-        }
-
-        .loading-dot.active {
-            opacity: 1;
-            box-shadow: 0 0 6px var(--accent);
+        .braille-spinner {
+            color: var(--accent);
+            font-size: 1rem;
         }
 
         /* ===== FOOTER ===== */
@@ -1576,60 +1554,35 @@
                 terminalBody.appendChild(shimmerDiv);
                 terminalBody.scrollTop = terminalBody.scrollHeight;
 
-                // After shimmer completes, show the loading dots
+                // After shimmer completes, show braille spinner
                 setTimeout(() => {
                     addBlank();
-                    // Create loading dots
                     const dotsLine = document.createElement('div');
                     dotsLine.className = 'line';
-                    dotsLine.innerHTML = '<span class="output" style="margin-right:8px;">Analyzing</span><span class="loading-dots-container"><span class="loading-dots-grid" id="loading-grid"></span></span>';
+                    dotsLine.innerHTML = '<span class="braille-spinner" id="braille-spin"></span> <span class="output">Analyzing...</span>';
                     terminalBody.appendChild(dotsLine);
                     terminalBody.scrollTop = terminalBody.scrollHeight;
 
-                    const grid = document.getElementById('loading-grid');
-                    // Create 8 dots in a 4x2 rectangle
-                    for (let i = 0; i < 8; i++) {
-                        const dot = document.createElement('span');
-                        dot.className = 'loading-dot';
-                        dot.id = 'dot-' + i;
-                        grid.appendChild(dot);
-                    }
+                    const frames = ['\u2819','\u2839','\u2838','\u283C','\u2834','\u2826','\u2827','\u2807','\u280F'];
+                    let spinIdx = 0;
+                    let spinCycles = 0;
+                    const spinEl = document.getElementById('braille-spin');
 
-                    // Animate dots clockwise: top-left to top-right (0,1,2,3), then bottom-right to bottom-left (7,6,5,4)
-                    const clockwiseOrder = [0, 1, 2, 3, 7, 6, 5, 4];
-                    let dotStep = 0;
-                    let dotCycles = 0;
-
-                    const dotInterval = setInterval(() => {
-                        // Clear all
-                        for (let i = 0; i < 8; i++) {
-                            document.getElementById('dot-' + i).classList.remove('active');
-                        }
-                        // Light current and trailing
-                        const curr = clockwiseOrder[dotStep % 8];
-                        const prev = clockwiseOrder[(dotStep - 1 + 8) % 8];
-                        document.getElementById('dot-' + curr).classList.add('active');
-                        document.getElementById('dot-' + prev).style.opacity = '0.5';
-                        setTimeout(() => {
-                            const el = document.getElementById('dot-' + prev);
-                            if (el && !el.classList.contains('active')) el.style.opacity = '0.2';
-                        }, 100);
-
-                        dotStep++;
-                        if (dotStep % 8 === 0) dotCycles++;
-                        if (dotCycles >= 3) {
-                            clearInterval(dotInterval);
-                            // Complete - show result
+                    const spinInterval = setInterval(() => {
+                        spinEl.textContent = frames[spinIdx % frames.length];
+                        spinIdx++;
+                        if (spinIdx % frames.length === 0) spinCycles++;
+                        if (spinCycles >= 3) {
+                            clearInterval(spinInterval);
                             setTimeout(() => {
                                 dotsLine.remove();
                                 addLine('<span style="color: var(--green);">&#x2713; File read successfully (4 lines)</span>');
                                 addBlank();
-                                // Final cursor
                                 addLine('<span style="color: var(--accent2); font-weight:600;">You: </span><span class="typing-cursor"></span>');
                                 terminalBody.scrollTop = terminalBody.scrollHeight;
                             }, 200);
                         }
-                    }, 150);
+                    }, 80);
                 }, 1600);
             }, LINE_DELAY);
         });
