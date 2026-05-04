@@ -84,32 +84,41 @@ class Agent:
 
         full_response = ""
         tool_calls = []
+        buffer = ""
+        in_tool_call = False
 
-        # Collect full response first to detect tool calls
+        # Stream response — buffer when <tool_call> detected
         for response in self.engine.chat(
             messages,
             tools=tools,
             temperature=self.config.model.temperature,
             max_tokens=self.config.model.max_tokens,
-            stream=False,
+            stream=True,
         ):
-            full_response += response.content
-            tool_calls.extend(response.tool_calls)
+            if response.tool_calls:
+                tool_calls.extend(response.tool_calls)
 
-        # If no native tool calls, parse from text
+            if response.content:
+                full_response += response.content
+                buffer += response.content
+
+                # Check if we're entering a tool call
+                if not in_tool_call and "<tool_call>" in buffer:
+                    # Yield everything before the tag
+                    pre = buffer.split("<tool_call>")[0]
+                    if pre.strip():
+                        yield pre
+                    in_tool_call = True
+                    buffer = ""
+                elif not in_tool_call:
+                    # Stream normally — yield and clear buffer
+                    yield buffer
+                    buffer = ""
+                # If in_tool_call, keep buffering silently
+
+        # Parse tool calls from accumulated response
         if not tool_calls:
             tool_calls = self.engine._parse_tool_calls(full_response)
-
-        # Yield clean text (strip tool call markup)
-        if tool_calls:
-            import re
-            clean = re.sub(
-                r'<tool_call>[\s\S]*?</tool_call>', '', full_response
-            ).strip()
-            if clean:
-                yield clean
-        else:
-            yield full_response
 
         # Handle tool calls with visual feedback
         if tool_calls:

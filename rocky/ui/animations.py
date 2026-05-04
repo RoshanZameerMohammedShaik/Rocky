@@ -244,27 +244,14 @@ def show_read_shimmer(console: Console, filepath: str, content: str):
 
 # ===== STARTUP ANIMATION =====
 
-ROCKY_LOGO = """
- ____            _            _    ___
-|  _ \\ ___   ___| | ___   _  / \\  |_ _|
-| |_) / _ \\ / __| |/ / | | |/ _ \\  | |
-|  _ < (_) | (__|   <| |_| / ___ \\ | |
-|_| \\_\\___/ \\___|_|\\_\\\\__, /_/   \\_\\___|
-                      |___/
-"""
-
-
 def show_startup(console: Console, version: str):
-    """Show startup animation with Rocky logo."""
-    # Animate logo appearing line by line
-    logo_lines = ROCKY_LOGO.strip().splitlines()
-
-    for i, line in enumerate(logo_lines):
-        console.print(f"[bold cyan]{line}[/bold cyan]")
-        time.sleep(0.05)
-
+    """Show startup with clean styled text."""
     console.print()
-    console.print(f"  [bold]Your local AI assistant[/bold]  [dim]\u2022[/dim]  v{version}")
+    console.print("  [bold cyan]Rocky[/bold cyan][dim].Ai[/dim]", end="")
+    time.sleep(0.15)
+    console.print(f"  [dim]v{version}[/dim]")
+    console.print()
+    console.print("  [bold]Your local AI assistant[/bold]")
     console.print()
 
 
