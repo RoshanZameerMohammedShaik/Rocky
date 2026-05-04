@@ -1,4 +1,4 @@
-"""Model downloader for Rocky.AI.
+"""Model downloader for Rocky.Ai.
 
 Downloads GGUF models directly from HuggingFace.
 No Ollama, no middleman — just direct HTTP downloads with resume support.
@@ -46,7 +46,7 @@ class DownloadProgress:
         return (self.downloaded / self.total) * 100
 
 
-# Default model registry — curated for Rocky.AI
+# Default model registry — curated for Rocky.Ai
 MODEL_REGISTRY: dict[str, ModelInfo] = {
     "qwen2.5-3b": ModelInfo(
         name="Qwen2.5-3B-Instruct",

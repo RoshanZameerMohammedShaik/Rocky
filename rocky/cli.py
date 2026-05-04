@@ -1,4 +1,4 @@
-"""CLI entry point for Rocky.AI."""
+"""CLI entry point for Rocky.Ai."""
 
 import sys
 import signal
@@ -45,7 +45,7 @@ class RockyCLI:
         if not self.agent.initialize():
             return 1
 
-        self.console.print(f"[green]{ICONS['success']} Rocky.AI is ready![/green]")
+        self.console.print(f"[green]{ICONS['success']} Rocky.Ai is ready![/green]")
         self.console.print()
 
         # Get input handler
@@ -122,7 +122,7 @@ class RockyCLI:
 [bold]Available Commands:[/bold]
 
   /help          Show this help message
-  /quit, /exit   Exit Rocky.AI
+  /quit, /exit   Exit Rocky.Ai
   /clear         Clear conversation history
   /save [name]   Save current session
   /load <name>   Load a saved session

@@ -1,4 +1,4 @@
-"""Network utilities for Rocky.AI."""
+"""Network utilities for Rocky.Ai."""
 
 import socket
 from typing import Optional

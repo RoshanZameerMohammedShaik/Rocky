@@ -1,4 +1,4 @@
-"""Configuration management for Rocky.AI."""
+"""Configuration management for Rocky.Ai."""
 
 import os
 import yaml

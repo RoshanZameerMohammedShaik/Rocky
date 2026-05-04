@@ -1,4 +1,4 @@
-"""Media processing tools for Rocky.AI."""
+"""Media processing tools for Rocky.Ai."""
 
 import subprocess
 import tempfile

@@ -1,4 +1,4 @@
-"""Base tool class for Rocky.AI."""
+"""Base tool class for Rocky.Ai."""
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field

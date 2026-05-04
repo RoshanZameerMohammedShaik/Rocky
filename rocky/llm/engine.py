@@ -1,4 +1,4 @@
-"""LLM inference engine for Rocky.AI using llama-cpp-python.
+"""LLM inference engine for Rocky.Ai using llama-cpp-python.
 
 Runs models directly in-process — no Ollama, no external apps, no UI.
 Just pure local inference via llama.cpp bindings.

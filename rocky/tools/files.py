@@ -1,4 +1,4 @@
-"""File operation tools for Rocky.AI."""
+"""File operation tools for Rocky.Ai."""
 
 import os
 import re

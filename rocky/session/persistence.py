@@ -1,4 +1,4 @@
-"""Session persistence for Rocky.AI."""
+"""Session persistence for Rocky.Ai."""
 
 import json
 from pathlib import Path

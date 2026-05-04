@@ -1,4 +1,4 @@
-"""Git operations tool for Rocky.AI."""
+"""Git operations tool for Rocky.Ai."""
 
 import subprocess
 from pathlib import Path

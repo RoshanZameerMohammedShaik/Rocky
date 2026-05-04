@@ -1,4 +1,4 @@
-"""Diff display for Rocky.AI."""
+"""Diff display for Rocky.Ai."""
 
 from rich.console import Console
 from rich.syntax import Syntax

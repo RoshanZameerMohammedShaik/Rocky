@@ -1,4 +1,4 @@
-"""Main agent for Rocky.AI."""
+"""Main agent for Rocky.Ai."""
 
 from typing import Generator
 from rich.console import Console
@@ -31,7 +31,7 @@ FILE_READ_TOOLS = {"read_file"}
 
 
 class Agent:
-    """The main Rocky.AI agent."""
+    """The main Rocky.Ai agent."""
 
     def __init__(self, console: Console):
         self.console = console

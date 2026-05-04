@@ -1,4 +1,4 @@
-"""Thinking/reasoning display for Rocky.AI."""
+"""Thinking/reasoning display for Rocky.Ai."""
 
 from dataclasses import dataclass, field
 from typing import Optional

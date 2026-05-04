@@ -1,4 +1,4 @@
-# Rocky.AI Installer for Windows
+# Rocky.Ai Installer for Windows
 # Checks prerequisites, installs everything needed.
 # Usage: .\install.ps1
 # After install: Rocky
@@ -11,7 +11,7 @@ function Write-Fail($msg) { Write-Host "  [X]  $msg" -ForegroundColor Red }
 function Write-Info($msg) { Write-Host "  [i]  $msg" -ForegroundColor Cyan }
 
 Write-Host ""
-Write-Host "  Rocky.AI Installer" -ForegroundColor Cyan
+Write-Host "  Rocky.Ai Installer" -ForegroundColor Cyan
 Write-Host "  Fully local AI - Zero external apps - One command to run" -ForegroundColor DarkGray
 Write-Host ""
 
@@ -93,7 +93,7 @@ if ($errors -gt 0) {
     exit 1
 }
 
-Write-Host "  Installing Rocky.AI..." -ForegroundColor White
+Write-Host "  Installing Rocky.Ai..." -ForegroundColor White
 Write-Host ""
 
 if (Test-Path "pyproject.toml") {

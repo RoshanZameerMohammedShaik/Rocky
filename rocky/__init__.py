@@ -1,4 +1,4 @@
-"""Rocky.AI - Your local AI assistant."""
+"""Rocky.Ai - Your local AI assistant."""
 
-__version__ = "0.2.0"
-__app_name__ = "Rocky.AI"
+__version__ = "1.0"
+__app_name__ = "Rocky.Ai"

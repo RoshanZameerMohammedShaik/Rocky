@@ -1,4 +1,4 @@
-"""Web search and fetch tools for Rocky.AI."""
+"""Web search and fetch tools for Rocky.Ai."""
 
 import re
 from typing import Optional

@@ -1,1 +1,1 @@
-"""UI modules for Rocky.AI."""
+"""UI modules for Rocky.Ai."""

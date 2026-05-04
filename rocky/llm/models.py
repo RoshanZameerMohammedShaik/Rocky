@@ -1,4 +1,4 @@
-"""Model management for Rocky.AI.
+"""Model management for Rocky.Ai.
 
 Manages model downloading, loading, and switching.
 Uses llama-cpp-python engine with HuggingFace model downloads.

@@ -1,4 +1,4 @@
-"""Platform-specific utilities for Rocky.AI."""
+"""Platform-specific utilities for Rocky.Ai."""
 
 import os
 import platform

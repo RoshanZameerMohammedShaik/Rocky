@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rocky-ai"
-version = "0.2.0"
+version = "1.0"
 description = "A fully local, open-source agentic AI CLI tool — no cloud, no external apps"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
 authors = [
-    {name = "Rocky.AI Contributors"}
+    {name = "Rocky.Ai Contributors"}
 ]
 keywords = ["ai", "cli", "agent", "local", "llm", "gguf"]
 classifiers = [

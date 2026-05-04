@@ -1,4 +1,4 @@
-"""Input validation and safety checks for Rocky.AI."""
+"""Input validation and safety checks for Rocky.Ai."""
 
 import re
 from pathlib import Path

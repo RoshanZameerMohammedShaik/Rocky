@@ -1,4 +1,4 @@
-"""Conversation memory for Rocky.AI."""
+"""Conversation memory for Rocky.Ai."""
 
 from dataclasses import dataclass, field
 from typing import Optional

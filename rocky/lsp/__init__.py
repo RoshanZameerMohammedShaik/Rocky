@@ -1,4 +1,4 @@
-"""LSP integration for Rocky.AI."""
+"""LSP integration for Rocky.Ai."""
 
 # LSP integration will be implemented in a future update
 # This module provides code intelligence features like:

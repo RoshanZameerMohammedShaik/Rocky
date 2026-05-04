@@ -1,4 +1,4 @@
-"""Terminal animations for Rocky.AI.
+"""Terminal animations for Rocky.Ai.
 
 Visual feedback system:
 - Rectangular loading dots for thinking/waiting

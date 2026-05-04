@@ -1,1 +1,1 @@
-"""Utility modules for Rocky.AI."""
+"""Utility modules for Rocky.Ai."""

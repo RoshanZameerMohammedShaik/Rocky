@@ -1,4 +1,4 @@
-"""Progress bars for Rocky.AI."""
+"""Progress bars for Rocky.Ai."""
 
 from rich.console import Console
 from rich.progress import (

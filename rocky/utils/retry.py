@@ -1,4 +1,4 @@
-"""Retry logic for Rocky.AI."""
+"""Retry logic for Rocky.Ai."""
 
 import time
 from typing import Callable, TypeVar, Optional

@@ -1,4 +1,4 @@
-"""Splash screen for Rocky.AI."""
+"""Splash screen for Rocky.Ai."""
 
 from rich.console import Console
 from rocky import __version__
@@ -7,7 +7,7 @@ from rocky.ui.animations import show_startup
 
 
 def show_splash(console: Console, compact: bool = False):
-    """Display the Rocky.AI splash screen with animation."""
+    """Display the Rocky.Ai splash screen with animation."""
     show_startup(console, __version__)
 
     online = is_online()

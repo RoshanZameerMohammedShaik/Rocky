@@ -1,4 +1,4 @@
-"""Tools for Rocky.AI."""
+"""Tools for Rocky.Ai."""
 
 from rocky.tools.base import Tool, ToolResult, ToolParameter, get_tool_registry
 from rocky.tools.files import (

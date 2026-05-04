@@ -1,4 +1,4 @@
-# Rocky.AI
+# Rocky.Ai
 
 A fully local, open-source agentic AI CLI tool that runs entirely on your machine — no cloud, no API keys, no external AI apps.
 

@@ -1,4 +1,4 @@
-"""Permission prompts for Rocky.AI."""
+"""Permission prompts for Rocky.Ai."""
 
 from rich.console import Console
 from rich.panel import Panel
@@ -53,7 +53,7 @@ class PermissionManager:
         
         panel = Panel(
             content,
-            title="[bold]Rocky.AI wants to run:[/bold]",
+            title="[bold]Rocky.Ai wants to run:[/bold]",
             border_style="yellow",
         )
         console.print(panel)

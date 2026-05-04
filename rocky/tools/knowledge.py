@@ -1,4 +1,4 @@
-"""Knowledge base tool for Rocky.AI using simple file-based storage."""
+"""Knowledge base tool for Rocky.Ai using simple file-based storage."""
 
 import json
 import hashlib

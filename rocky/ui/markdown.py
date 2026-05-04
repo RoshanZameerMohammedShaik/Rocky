@@ -1,4 +1,4 @@
-"""Markdown rendering for Rocky.AI."""
+"""Markdown rendering for Rocky.Ai."""
 
 from rich.console import Console
 from rich.markdown import Markdown

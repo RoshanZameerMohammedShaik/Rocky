@@ -1,4 +1,4 @@
-"""Logging setup for Rocky.AI."""
+"""Logging setup for Rocky.Ai."""
 
 import logging
 from pathlib import Path
@@ -7,7 +7,7 @@ from rocky.config import get_config
 
 
 def setup_logging() -> logging.Logger:
-    """Setup logging for Rocky.AI."""
+    """Setup logging for Rocky.Ai."""
     config = get_config()
     log_dir = config.paths.logs
     log_dir.mkdir(parents=True, exist_ok=True)

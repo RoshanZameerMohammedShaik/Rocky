@@ -1,4 +1,4 @@
-"""Session management for Rocky.AI."""
+"""Session management for Rocky.Ai."""
 
 from rocky.session.memory import ConversationMemory
 from rocky.session.persistence import SessionManager

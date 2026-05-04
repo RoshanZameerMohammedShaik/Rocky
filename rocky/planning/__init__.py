@@ -1,1 +1,1 @@
-"""Planning modules for Rocky.AI."""
+"""Planning modules for Rocky.Ai."""

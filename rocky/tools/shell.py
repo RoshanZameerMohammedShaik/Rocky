@@ -1,4 +1,4 @@
-"""Shell command execution tool for Rocky.AI."""
+"""Shell command execution tool for Rocky.Ai."""
 
 import subprocess
 import shlex

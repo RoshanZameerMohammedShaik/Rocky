@@ -1,4 +1,4 @@
-"""Input handling for Rocky.AI."""
+"""Input handling for Rocky.Ai."""
 
 import os
 import readline
